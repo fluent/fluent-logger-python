@@ -24,8 +24,8 @@ Fluent daemon must be lauched with the following configuration:
       port 24224
     </source>
 
-Use
----
+Usage
+-----
 
 First, you need to call logger.setup() to create global logger instance. This call needs to be called only once, at the beggining of the application for example.
 
@@ -43,7 +43,7 @@ Then, please create the events like this. This will send the event to fluent, wi
 
     from fluent import event
 
-    # send event with tag app.follow                                                                                          
+    # send event to fluentd, with 'app.follow' tag
     event.Event('follow', {
       'from': 'userA',
       'to':   'userB'
