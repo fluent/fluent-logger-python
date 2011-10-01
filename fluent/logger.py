@@ -20,7 +20,7 @@ def get_global_logger():
     global global_logger
     return global_logger
 
-class FluentLogger:
+class FluentLogger(fluent):
     def __init__(self,
            tag,
            host='127.0.0.1',

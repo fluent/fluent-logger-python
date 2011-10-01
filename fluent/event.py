@@ -1,6 +1,6 @@
 from fluent import logger
 
-class Event:
+class Event(object):
     def __init__(self, label, data, **kwargs):
         if not isinstance(data, dict) :
             raise Exception("data must be dict")
