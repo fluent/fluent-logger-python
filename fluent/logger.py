@@ -7,6 +7,19 @@ import threading
 import json
 import time
 
+global_logger = None
+
+def setup(tag, **kwargs):
+    host = kwargs.has_key("host") and kwargs['host'] or 'localhost'
+    port = kwargs.has_key("port") and kwargs['port'] or 24224
+
+    global global_logger
+    global_logger = FluentLogger(tag, host=host, port=port)
+
+def get_global_logger():
+    global global_logger
+    return global_logger
+
 class FluentLogger:
     def __init__(self,
            tag,
@@ -32,9 +45,6 @@ class FluentLogger:
             # will be retried in emit()
             self.socket = None
 
-    def __del__(self):
-        self._close()
-
     def emit(self, label, data):
         bytes = self._make_packet(label, data)
         self._send(bytes)
@@ -50,6 +60,7 @@ class FluentLogger:
         return sock
 
     def _close(self):
+        print self.socket
         if self.socket:
             self.socket.close()
         self.socket = None
