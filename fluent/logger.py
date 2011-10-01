@@ -10,8 +10,8 @@ import time
 global_logger = None
 
 def setup(tag, **kwargs):
-    host = kwargs.has_key("host") and kwargs['host'] or 'localhost'
-    port = kwargs.has_key("port") and kwargs['port'] or 24224
+    host = ('host' in kwargs) and kwargs['host'] or 'localhost'
+    port = ('port' in kwargs) and kwargs['port'] or 24224
 
     global global_logger
     global_logger = FluentLogger(tag, host=host, port=port)
