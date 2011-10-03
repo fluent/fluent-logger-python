@@ -31,13 +31,13 @@ First, you need to call logger.setup() to create global logger instance. This ca
 
 By default, the logger assumes fluent daemon is launched locally. You can also specify remote logger by passing the options.
 
-    from fluent import logger
+    from fluent import sender
     
     # for local fluent
-    logger.setup('app')
+    sender.setup('app')
     
     # for remote fluent
-    logger.setup('app', server='host', port='24224')
+    sender.setup('app', server='host', port='24224')
 
 Then, please create the events like this. This will send the event to fluent, with tag 'app.follow' and the attributes 'from' and 'to'.
 

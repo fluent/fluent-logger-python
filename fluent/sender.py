@@ -1,4 +1,3 @@
-import logging
 import os
 import sys, urllib
 import msgpack
@@ -7,20 +6,20 @@ import threading
 import json
 import time
 
-global_logger = None
+global_sender = None
 
 def setup(tag, **kwargs):
     host = ('host' in kwargs) and kwargs['host'] or 'localhost'
     port = ('port' in kwargs) and kwargs['port'] or 24224
 
-    global global_logger
-    global_logger = FluentLogger(tag, host=host, port=port)
+    global global_sender
+    global_sender = FluentSender(tag, host=host, port=port)
 
-def get_global_logger():
-    global global_logger
-    return global_logger
+def get_global_sender():
+    global global_sender
+    return global_sender
 
-class FluentLogger(fluent):
+class FluentSender(object):
     def __init__(self,
            tag,
            host='127.0.0.1',
@@ -60,7 +59,6 @@ class FluentLogger(fluent):
         return sock
 
     def _close(self):
-        print self.socket
         if self.socket:
             self.socket.close()
         self.socket = None

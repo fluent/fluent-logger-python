@@ -1,9 +1,9 @@
 import unittest
 
 import fluent
-from fluent import event, logger
+from fluent import event, sender
 
-logger.setup(server='localhost', tag='app')
+sender.setup(server='localhost', tag='app')
 
 class TestHandler(unittest.TestCase):
     def testLogging(self):
