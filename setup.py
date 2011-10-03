@@ -8,7 +8,7 @@ desc = 'A Python logging handler for Fluent event collector'
 
 setup(
   name='fluent-logger',
-  version='0.1.0',
+  version='0.1.1',
   description=desc,
   long_description=open(README).read(),
   package_dir={'fluent': 'fluent'},
