@@ -60,7 +60,7 @@ class FluentSender(object):
         self.socket = None
 
     def _make_packet(self, label, data):
-        tag = '.'.join(self.tag, label)
+        tag = '.'.join((self.tag, label))
         cur_time = int(time.time())
         packet = (tag, cur_time, data)
         if self.verbose:
