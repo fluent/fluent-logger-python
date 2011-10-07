@@ -31,33 +31,20 @@ class FluentSender(object):
         self.timeout = timeout
         self.verbose = verbose
 
+        self.socket = None
         self.pendings = None
         self.packer = msgpack.Packer()
         self.lock = threading.Lock()
+        
         try:
-            self.socket = self._connect()
+            self._reconnect()
         except:
             # will be retried in emit()
-            self.socket = None
+            self._close()
 
     def emit(self, label, data):
         bytes = self._make_packet(label, data)
         self._send(bytes)
-
-    def _reconnect(self):
-        if not self.socket:
-            self.socket = self._connect()
-
-    def _connect(self):
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.settimeout(self.timeout)
-        sock.connect((self.host, self.port))
-        return sock
-
-    def _close(self):
-        if self.socket:
-            self.socket.close()
-        self.socket = None
 
     def _make_packet(self, label, data):
         if label:
@@ -97,6 +84,19 @@ class FluentSender(object):
             self._close()
             # clear buffer if it exceeds max bufer size
             if self.pendings and (len(self.pendings) > self.bufmax):
+                # TODO: add callback handler here
                 self.pendings = None
             else:
                 self.pendings = bytes
+
+    def _reconnect(self):
+        if not self.socket:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(self.timeout)
+            sock.connect((self.host, self.port))
+            self.socket = sock
+
+    def _close(self):
+        if self.socket:
+            self.socket.close()
+        self.socket = None
