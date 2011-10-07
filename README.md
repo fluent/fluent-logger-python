@@ -1,7 +1,7 @@
 # A Python structured logger for Fluent
 
 
-Many web/mobile applications generate huge amount of event logs (c,f. login, logout, purchase, follow, etc). To analyze these event logs could be really valuable for improving the service. However, the challenge is collecting these logs seasily and reliably.
+Many web/mobile applications generate huge amount of event logs (c,f. login, logout, purchase, follow, etc). To analyze these event logs could be really valuable for improving the service. However, the challenge is collecting these logs easily and reliably.
 
 [Fluent](http://github.com/fluent/fluent) solves that problem by having: easy installation, small footprint, plugins, reliable buffering, log forwarding, etc.
 
