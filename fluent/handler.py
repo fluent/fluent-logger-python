@@ -8,7 +8,7 @@ import json
 
 from fluent import sender
 
-class FluentRecordFormatter:
+class FluentRecordFormatter(object):
     def __init__(self):
         self.hostname = socket.gethostname()
 
@@ -24,9 +24,10 @@ class FluentRecordFormatter:
           # 'sys_funcname' : record.funcName,
           # 'sys_exc_info' : record.exc_info,
         }
-        self._structuring(data, record.msg)
         # if 'sys_exc_info' in data and data['sys_exc_info']:
         #    data['sys_exc_info'] = self.formatException(data['sys_exc_info'])
+
+        self._structuring(data, record.msg)
         return data
 
     def _structuring(self, data, msg):
@@ -45,7 +46,7 @@ class FluentRecordFormatter:
 
 class FluentHandler(logging.Handler):
     '''
-    Logging Handler for td-agent.
+    Logging Handler for fluent.
     '''
     def __init__(self,
            tag,
