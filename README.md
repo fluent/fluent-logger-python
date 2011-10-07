@@ -27,6 +27,9 @@ Fluent daemon must be lauched with the following configuration:
 Usage
 -----
 
+Event-Based Interface
+^^^^^^^^^^^^^^^^^^^^^
+
 First, you need to call logger.setup() to create global logger instance. This call needs to be called only once, at the beggining of the application for example.
 
 By default, the logger assumes fluent daemon is launched locally. You can also specify remote logger by passing the options.
@@ -47,6 +50,22 @@ Then, please create the events like this. This will send the event to fluent, wi
     event.Event('follow', {
       'from': 'userA',
       'to':   'userB'
+    })
+    
+Python logging.Handler interface
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+This client-library also has FluentHanler class for Python logging module.
+
+    import logging
+    from fluent import handler
+    
+    logging.basicConfig(level=logging.INFO)
+    l = logging.getLogger('fluent.test')
+    l.addHandler(handler.FluentHandler('app.follow'))
+    l.info({
+      'from': 'userA',
+      'to': 'userB'
     })
 
 License
