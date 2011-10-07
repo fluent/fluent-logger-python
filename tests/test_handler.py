@@ -31,11 +31,11 @@ class TestLogger(unittest.TestCase):
         h._close()
 
         data = self.get_data()
-        #print
-        #eq = self.assertEqual
-        #eq(1, len(data))
-        #eq(3, len(data[0]))
-        #eq('test.foo', data[0][0])
-        #eq({'bar':'baz'}, data[0][2])
-        #self.assert_(data[0][1])
-        #self.assert_(isinstance(data[0][1], int))
+        eq = self.assertEqual
+        eq(1, len(data))
+        eq(3, len(data[0]))
+        eq('app.follow', data[0][0])
+        eq('userA', data[0][2]['from'])
+        eq('userB', data[0][2]['to'])
+        self.assert_(data[0][1])
+        self.assert_(isinstance(data[0][1], int))

@@ -65,7 +65,7 @@ class FluentHandler(logging.Handler):
     def emit(self, record):
         if record.levelno < self.level: return
         data = self.fmt.format(record)
-        self.sender.emit('', data)
+        self.sender.emit(None, data)
 
     def _close(self):
         self.sender._close()
