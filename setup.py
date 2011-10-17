@@ -18,7 +18,7 @@ setup(
   author_email='kazuki.ohta@gmail.com',
   url='https://github.com/kzk/fluent-logger-python',
   download_url='http://pypi.python.org/pypi/fluent-logger/',
-  license='MIT',
+  license='Apache License, Version 2.0',
   classifiers=[
     'Programming Language :: Python :: 2',
     'Programming Language :: Python :: 3',
