@@ -22,6 +22,10 @@ Fluent daemon must be lauched with the following configuration:
       port 24224
     </source>
 
+    <match app.**>
+      type stdout
+    </match>
+
 ## Usage
 
 ### Event-Based Interface
@@ -36,7 +40,7 @@ By default, the logger assumes fluent daemon is launched locally. You can also s
     sender.setup('app')
     
     # for remote fluent
-    sender.setup('app', server='host', port='24224')
+    sender.setup('app', host='host', port=24224)
 
 Then, please create the events like this. This will send the event to fluent, with tag 'app.follow' and the attributes 'from' and 'to'.
 
@@ -57,7 +61,7 @@ This client-library also has FluentHanler class for Python logging module.
     
     logging.basicConfig(level=logging.INFO)
     l = logging.getLogger('fluent.test')
-    l.addHandler(handler.FluentHandler('app.follow'))
+    l.addHandler(handler.FluentHandler('app.follow', host='host', port=24224))
     l.info({
       'from': 'userA',
       'to': 'userB'
