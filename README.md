@@ -66,6 +66,11 @@ This client-library also has FluentHanler class for Python logging module.
       'from': 'userA',
       'to': 'userB'
     })
+    
+## Contributors
+
+* [Ken Sato](https://github.com/ksato9700)
+* [Naoki Inada](http://github.com/methane)
 
 ## License
 
