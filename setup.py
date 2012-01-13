@@ -4,11 +4,11 @@ from distutils.core import setup
 from os import path
 
 README = path.abspath(path.join(path.dirname(__file__), 'README.md'))
-desc = 'A Python logging handler for Fluent event collector'
+desc = 'A Python logging handler for Fluentd event collector'
 
 setup(
   name='fluent-logger',
-  version='0.2.0',
+  version='0.3.0',
   description=desc,
   long_description=open(README).read(),
   package_dir={'fluent': 'fluent'},
