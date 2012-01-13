@@ -1,9 +1,9 @@
-# A Python structured logger for Fluent
+# A Python structured logger for Fluentd
 
 
 Many web/mobile applications generate huge amount of event logs (c,f. login, logout, purchase, follow, etc). To analyze these event logs could be really valuable for improving the service. However, the challenge is collecting these logs easily and reliably.
 
-[Fluent](http://github.com/fluent/fluent) solves that problem by having: easy installation, small footprint, plugins, reliable buffering, log forwarding, etc.
+[Fluentd](http://github.com/fluent/fluentd) solves that problem by having: easy installation, small footprint, plugins, reliable buffering, log forwarding, etc.
 
 **fluent-logger-python** is a Python library, to record the events from Python application.
 
