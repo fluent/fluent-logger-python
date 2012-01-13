@@ -1,4 +1,5 @@
 import unittest
+import time
 
 import fluent
 from fluent import event, sender
@@ -12,3 +13,10 @@ class TestHandler(unittest.TestCase):
           'from': 'userA',
           'to':   'userB'
         })
+
+        # send event with tag app.follow, with timestamp
+        event.Event('follow', {
+          'from': 'userA',
+          'to':   'userB'
+        }, time=int(0))
+

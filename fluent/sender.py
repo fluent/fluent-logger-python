@@ -43,16 +43,19 @@ class FluentSender(object):
             self._close()
 
     def emit(self, label, data):
-        bytes = self._make_packet(label, data)
+        cur_time = int(time.time())
+        self.emit_with_time(label, cur_time, data)
+
+    def emit_with_time(self, label, timestamp, data):
+        bytes = self._make_packet(label, timestamp, data)
         self._send(bytes)
 
-    def _make_packet(self, label, data):
+    def _make_packet(self, label, timestamp, data):
         if label:
             tag = '.'.join((self.tag, label))
         else:
             tag = self.tag
-        cur_time = int(time.time())
-        packet = (tag, cur_time, data)
+        packet = (tag, timestamp, data)
         if self.verbose:
             print packet
         return self.packer.pack(packet)
