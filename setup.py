@@ -16,7 +16,7 @@ setup(
   install_requires=['msgpack-python'],
   author='Kazuki Ohta',
   author_email='kazuki.ohta@gmail.com',
-  url='https://github.com/kzk/fluent-logger-python',
+  url='https://github.com/fluent/fluent-logger-python',
   download_url='http://pypi.python.org/pypi/fluent-logger/',
   license='Apache License, Version 2.0',
   classifiers=[
