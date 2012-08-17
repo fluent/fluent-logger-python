@@ -35,13 +35,13 @@ class FluentRecordFormatter(object):
             self._add_dic(data, msg)
         elif isinstance(msg, str):
             try:
-                self.add_dic(data, json.loads(str(msg)))
+                self._add_dic(data, json.loads(str(msg)))
             except:
                 pass
 
     def _add_dic(self, data, dic):
         for k, v in dic.items():
-            if isinstance(k, str):
+            if isinstance(k, str) or isinstance(k, unicode):
                 data[str(k)] = v
 
 class FluentHandler(logging.Handler):
