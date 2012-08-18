@@ -1,7 +1,11 @@
 #!/usr/bin/python
 
-from distutils.core import setup
 from os import path
+
+try:
+    from setuptools import setup
+except ImportError:
+    from distutils.core import setup
 
 README = path.abspath(path.join(path.dirname(__file__), 'README.md'))
 desc = 'A Python logging handler for Fluentd event collector'
@@ -24,5 +28,6 @@ setup(
     'Programming Language :: Python :: 3',
     'Development Status :: 4 - Beta',
     'Intended Audience :: Developers',
-  ]
+  ],
+  test_suite='tests'
 )
