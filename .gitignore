@@ -1,7 +1,9 @@
 .Python
-bin/
-include/
-lib/
-share/
-src/
+*.swp
+*.swo
 *.pyc
+*.pyo
+/*.egg-info
+/.tox
+/build
+/dist

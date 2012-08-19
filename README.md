@@ -13,6 +13,8 @@ This library is distributed as 'fluent-logger' python package. Please execute th
 
     $ pip install fluent-logger
 
+On Python 2.5, you have to install 'simplejson' in addition.
+
 ## Configuration
 
 Fluent daemon must be lauched with the following configuration:

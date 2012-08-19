@@ -4,7 +4,11 @@ import sys, urllib
 import msgpack
 import socket
 import threading
-import json
+
+try:
+    import json
+except ImportError:
+    import simplejson as json
 
 from fluent import sender
 
