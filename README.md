@@ -73,7 +73,7 @@ This client-library also has FluentHanler class for Python logging module.
     
 ## Contributors
 
-Patches contributed by {those people}[https://github.com/fluent/fluent-logger-python/contributors].
+Patches contributed by [those people](https://github.com/fluent/fluent-logger-python/contributors).
 
 ## License
 
