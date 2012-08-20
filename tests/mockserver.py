@@ -1,8 +1,12 @@
 import socket
 import threading
 import time
-from cStringIO import StringIO
 from msgpack import Unpacker
+
+try:
+    from cStringIO import StringIO as BytesIO
+except ImportError:
+    from io import BytesIO
 
 class MockRecvServer(threading.Thread):
     """
@@ -11,7 +15,7 @@ class MockRecvServer(threading.Thread):
     def __init__(self, port):
         self._sock = socket.socket()
         self._sock.bind(('localhost', port))
-        self._buf = StringIO()
+        self._buf = BytesIO()
 
         threading.Thread.__init__(self)
         self.start()
@@ -36,4 +40,5 @@ class MockRecvServer(threading.Thread):
     def get_recieved(self):
         self.wait()
         self._buf.seek(0)
-        return list(Unpacker(self._buf))
+        # TODO: have to process string encoding properly. currently we assume that all encoding is utf-8.
+        return list(Unpacker(self._buf, encoding='utf-8'))

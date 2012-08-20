@@ -1,3 +1,4 @@
+from __future__ import print_function
 import msgpack
 import socket
 import threading
@@ -57,7 +58,7 @@ class FluentSender(object):
             tag = self.tag
         packet = (tag, timestamp, data)
         if self.verbose:
-            print packet
+            print(packet)
         return self.packer.pack(packet)
 
     def _send(self, bytes):

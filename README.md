@@ -7,13 +7,15 @@ Many web/mobile applications generate huge amount of event logs (c,f. login, log
 
 **fluent-logger-python** is a Python library, to record the events from Python application.
 
+## Requirements
+
+* Python 2.6 or greater including 3.x
+
 ## Installation
 
 This library is distributed as 'fluent-logger' python package. Please execute the following command to install it.
 
     $ pip install fluent-logger
-
-On Python 2.5, you have to install 'simplejson' in addition.
 
 ## Configuration
 
