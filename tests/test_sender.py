@@ -1,17 +1,18 @@
+from __future__ import print_function
 import unittest
-import mockserver
+from tests import mockserver
 import fluent.sender
 import msgpack
 
 class TestSender(unittest.TestCase):
     def setUp(self):
         super(TestSender, self).setUp()
-        for port in xrange(10000, 20000):
+        for port in range(10000, 20000):
             try:
                 self._server = mockserver.MockRecvServer(port)
                 break
-            except IOError, e:
-                print e
+            except IOError as e:
+                print(e)
                 pass
         self._sender = fluent.sender.FluentSender(
                 tag='test',

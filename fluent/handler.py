@@ -1,6 +1,6 @@
 import logging
 import os
-import sys, urllib
+import sys
 import msgpack
 import socket
 import threading
