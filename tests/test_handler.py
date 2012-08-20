@@ -1,5 +1,5 @@
 import unittest
-import mockserver
+from tests import mockserver
 import logging
 import fluent.handler
 import msgpack
@@ -7,12 +7,12 @@ import msgpack
 class TestLogger(unittest.TestCase):
     def setUp(self):
         super(TestLogger, self).setUp()
-        for port in xrange(10000, 20000):
+        for port in range(10000, 20000):
             try:
                 self._server = mockserver.MockRecvServer(port)
                 self._port = port
                 break
-            except IOError, e:
+            except IOError as e:
                 pass
 
     def get_data(self):

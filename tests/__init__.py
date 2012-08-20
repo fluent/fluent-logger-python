@@ -1,6 +1,3 @@
-import sys
-sys.path = ['..'] + sys.path
-
-from test_event import *
-from test_sender import *
-from test_handler import *
+from tests.test_event import *
+from tests.test_sender import *
+from tests.test_handler import *
