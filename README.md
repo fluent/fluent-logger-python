@@ -19,7 +19,7 @@ This library is distributed as 'fluent-logger' python package. Please execute th
 
 ## Configuration
 
-Fluent daemon must be lauched with the following configuration:
+Fluentd daemon must be lauched with the following configuration:
 
     <source>
       type tcp
@@ -36,7 +36,7 @@ Fluent daemon must be lauched with the following configuration:
 
 First, you need to call logger.setup() to create global logger instance. This call needs to be called only once, at the beggining of the application for example.
 
-By default, the logger assumes fluent daemon is launched locally. You can also specify remote logger by passing the options.
+By default, the logger assumes fluentd daemon is launched locally. You can also specify remote logger by passing the options.
 
     from fluent import sender
     
