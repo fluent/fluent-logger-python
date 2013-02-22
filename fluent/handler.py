@@ -4,6 +4,7 @@ import sys
 import msgpack
 import socket
 import threading
+import traceback
 
 try:
     import json
@@ -31,17 +32,37 @@ class FluentRecordFormatter(object):
         # if 'sys_exc_info' in data and data['sys_exc_info']:
         #    data['sys_exc_info'] = self.formatException(data['sys_exc_info'])
 
-        self._structuring(data, record.msg)
+        self._structuring(data, record)
         return data
 
-    def _structuring(self, data, msg):
-        if isinstance(msg, dict):
-            self._add_dic(data, msg)
-        elif isinstance(msg, str):
+    def _structuring(self, data, record):
+        log_data = self._get_log_data(record)
+
+        traceback = self._get_traceback(record)
+        if traceback:
+            log_data['traceback'] = traceback
+
+        self._add_dic(data, log_data)
+
+    def _get_log_data(self, record):
+        if isinstance(record.msg, dict):
+            data = record.msg
+        else:
+            message = record.getMessage()
             try:
-                self._add_dic(data, json.loads(str(msg)))
-            except:
-                self._add_dic(data, {'message': str(msg)})
+                parsed_value = json.loads(message)
+            except ValueError, e:
+                data = {'message': message}
+            else:
+                if not isinstance(parsed_value, dict):
+                    data = {'message': parsed_value}
+        return data
+
+    def _get_traceback(self, record):
+        if not record.exc_info:
+            return None
+        tb = traceback.format_exception(*record.exc_info)
+        return "".join(tb)
 
     def _add_dic(self, data, dic):
         for k, v in dic.items():
