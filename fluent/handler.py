@@ -41,7 +41,7 @@ class FluentRecordFormatter(object):
             try:
                 self._add_dic(data, json.loads(str(msg)))
             except:
-                pass
+                self._add_dic(data, {'message': str(msg)})
 
     def _add_dic(self, data, dic):
         for k, v in dic.items():
