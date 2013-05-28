@@ -6,6 +6,7 @@ import time
 
 _global_sender = None
 
+
 def setup(tag, **kwargs):
     host = kwargs.get('host', 'localhost')
     port = kwargs.get('port', 24224)
@@ -13,19 +14,22 @@ def setup(tag, **kwargs):
     global _global_sender
     _global_sender = FluentSender(tag, host=host, port=port)
 
+
 def get_global_sender():
     return _global_sender
+
 
 class FluentSender(object):
     def __init__(self,
                  tag,
                  host='localhost',
                  port=24224,
-                 bufmax=1*1024*1024,
+                 bufmax=1 * 1024 * 1024,
                  timeout=3.0,
                  verbose=False):
 
         self.tag = tag
+        self.uds = host.startswith('unix://')
         self.host = host
         self.port = port
         self.bufmax = bufmax
@@ -36,7 +40,7 @@ class FluentSender(object):
         self.pendings = None
         self.packer = msgpack.Packer()
         self.lock = threading.Lock()
-        
+
         try:
             self._reconnect()
         except:
@@ -95,9 +99,15 @@ class FluentSender(object):
 
     def _reconnect(self):
         if not self.socket:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock_type = socket.AF_INET
+            sock_dest = (self.host, self.port)
+            if self.uds:
+                sock_type = socket.AF_UNIX
+                sock_dest = self.host[len('unix://'):]
+
+            sock = socket.socket(sock_type, socket.SOCK_STREAM)
             sock.settimeout(self.timeout)
-            sock.connect((self.host, self.port))
+            sock.connect(sock_dest)
             self.socket = sock
 
     def _close(self):

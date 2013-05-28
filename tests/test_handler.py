@@ -9,7 +9,7 @@ class TestLogger(unittest.TestCase):
         super(TestLogger, self).setUp()
         for port in range(10000, 20000):
             try:
-                self._server = mockserver.MockRecvServer(port)
+                self._server = mockserver.MockRecvServer(port=port)
                 self._port = port
                 break
             except IOError as e:
