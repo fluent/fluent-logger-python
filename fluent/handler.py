@@ -63,14 +63,16 @@ class FluentHandler(logging.Handler):
         self.sender = sender.FluentSender(tag,
                                           host=host, port=port,
                                           timeout=timeout, verbose=verbose)
-        self.fmt = FluentRecordFormatter()
         logging.Handler.__init__(self)
 
     def emit(self, record):
-        if record.levelno < self.level:
-            return
-        data = self.fmt.format(record)
+        data = self.format(record)
         self.sender.emit(None, data)
 
-    def _close(self):
-        self.sender._close()
+    def close(self):
+        self.acquire()
+        try:
+            self.sender._close()
+            logging.Handler.close(self)
+        finally:
+            self.release()

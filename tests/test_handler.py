@@ -27,12 +27,13 @@ class TestLogger(unittest.TestCase):
 
         logging.basicConfig(level=logging.INFO)
         log = logging.getLogger('fluent.test')
+        handler.setFormatter(fluent.handler.FluentRecordFormatter())
         log.addHandler(handler)
         log.info({
             'from': 'userA',
             'to': 'userB'
         })
-        handler._close()
+        handler.close()
 
         data = self.get_data()
         eq = self.assertEqual
