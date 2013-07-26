@@ -39,7 +39,7 @@ class FluentSender(object):
         
         try:
             self._reconnect()
-        except:
+        except Exception:
             # will be retried in emit()
             self._close()
 
@@ -48,8 +48,8 @@ class FluentSender(object):
         self.emit_with_time(label, cur_time, data)
 
     def emit_with_time(self, label, timestamp, data):
-        bytes = self._make_packet(label, timestamp, data)
-        self._send(bytes)
+        bytes_ = self._make_packet(label, timestamp, data)
+        self._send(bytes_)
 
     def _make_packet(self, label, timestamp, data):
         if label:
@@ -61,25 +61,25 @@ class FluentSender(object):
             print(packet)
         return self.packer.pack(packet)
 
-    def _send(self, bytes):
+    def _send(self, bytes_):
         self.lock.acquire()
         try:
-            self._send_internal(bytes)
+            self._send_internal(bytes_)
         finally:
             self.lock.release()
 
-    def _send_internal(self, bytes):
+    def _send_internal(self, bytes_):
         # buffering
         if self.pendings:
-            self.pendings += bytes
-            bytes = self.pendings
+            self.pendings += bytes_
+            bytes_ = self.pendings
 
         try:
             # reconnect if possible
             self._reconnect()
 
             # send message
-            self.socket.sendall(bytes)
+            self.socket.sendall(bytes_)
 
             # send finished
             self.pendings = None
@@ -91,7 +91,7 @@ class FluentSender(object):
                 # TODO: add callback handler here
                 self.pendings = None
             else:
-                self.pendings = bytes
+                self.pendings = bytes_
 
     def _reconnect(self):
         if not self.socket:
