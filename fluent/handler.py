@@ -39,10 +39,11 @@ class FluentRecordFormatter(object):
             except (ValueError, json.JSONDecodeError):
                 pass
 
-    def _add_dic(self, data, dic):
-        for k, v in dic.items():
-            if isinstance(k, basestring):
-                data[str(k)] = v
+    @staticmethod
+    def _add_dic(data, dic):
+        for key, value in dic.items():
+            if isinstance(key, basestring):
+                data[str(key)] = value
 
 class FluentHandler(logging.Handler):
     '''
@@ -63,7 +64,8 @@ class FluentHandler(logging.Handler):
         logging.Handler.__init__(self)
 
     def emit(self, record):
-        if record.levelno < self.level: return
+        if record.levelno < self.level:
+            return
         data = self.fmt.format(record)
         self.sender.emit(None, data)
 
