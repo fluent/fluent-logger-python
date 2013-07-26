@@ -6,5 +6,5 @@ class Event(object):
         if not isinstance(data, dict) :
             raise Exception("data must be dict")
         s = kwargs.get('sender', sender.get_global_sender())
-        timestamp = kwargs.get('time', int(time.time())
+        timestamp = kwargs.get('time', int(time.time()))
         s.emit_with_time(label, timestamp, data)

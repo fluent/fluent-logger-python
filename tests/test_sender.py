@@ -2,7 +2,6 @@ from __future__ import print_function
 import unittest
 from tests import mockserver
 import fluent.sender
-import msgpack
 
 class TestSender(unittest.TestCase):
     def setUp(self):

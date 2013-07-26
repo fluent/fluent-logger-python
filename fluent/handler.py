@@ -1,9 +1,5 @@
 import logging
-import os
-import sys
-import msgpack
 import socket
-import threading
 
 try:
     import simplejson as json

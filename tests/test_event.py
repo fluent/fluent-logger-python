@@ -1,7 +1,5 @@
 import unittest
-import time
 
-import fluent
 from fluent import event, sender
 
 sender.setup(server='localhost', tag='app')

@@ -2,7 +2,6 @@ import unittest
 from tests import mockserver
 import logging
 import fluent.handler
-import msgpack
 
 class TestLogger(unittest.TestCase):
     def setUp(self):
