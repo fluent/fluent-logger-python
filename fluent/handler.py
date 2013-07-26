@@ -45,7 +45,7 @@ class FluentRecordFormatter(object):
 
     def _add_dic(self, data, dic):
         for k, v in dic.items():
-            if isinstance(k, str) or isinstance(k, unicode):
+            if isinstance(k, basestring):
                 data[str(k)] = v
 
 class FluentHandler(logging.Handler):
