@@ -1,8 +1,12 @@
+# -*- coding: utf-8 -*-
+
 from __future__ import print_function
 import unittest
-from tests import mockserver
+
 import fluent.sender
-import msgpack
+
+from tests import mockserver
+
 
 class TestSender(unittest.TestCase):
     def setUp(self):
@@ -11,13 +15,11 @@ class TestSender(unittest.TestCase):
             try:
                 self._server = mockserver.MockRecvServer(port)
                 break
-            except IOError as e:
-                print(e)
-                pass
-        self._sender = fluent.sender.FluentSender(
-                tag='test',
-                port=port,
-                )
+            except IOError as exc:
+                print(exc)
+        self._sender = fluent.sender.FluentSender(tag='test',
+                                                  port=port,
+                                                  )
 
     def get_data(self):
         return self._server.get_recieved()
@@ -31,6 +33,6 @@ class TestSender(unittest.TestCase):
         eq(1, len(data))
         eq(3, len(data[0]))
         eq('test.foo', data[0][0])
-        eq({'bar':'baz'}, data[0][2])
+        eq({'bar': 'baz'}, data[0][2])
         self.assert_(data[0][1])
         self.assert_(isinstance(data[0][1], int))
