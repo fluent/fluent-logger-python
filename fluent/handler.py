@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import logging
 import socket
 
@@ -8,22 +10,22 @@ except ImportError:
 
 from fluent import sender
 
+
 class FluentRecordFormatter(object):
     def __init__(self):
         self.hostname = socket.gethostname()
 
     def format(self, record):
-        data = {
-          'sys_host' : self.hostname,
-          'sys_name' : record.name,
-          'sys_module' : record.module,
-          # 'sys_lineno' : record.lineno,
-          # 'sys_levelno' : record.levelno,
-          # 'sys_levelname' : record.levelname,
-          # 'sys_filename' : record.filename,
-          # 'sys_funcname' : record.funcName,
-          # 'sys_exc_info' : record.exc_info,
-        }
+        data = {'sys_host': self.hostname,
+                'sys_name': record.name,
+                'sys_module': record.module,
+                # 'sys_lineno': record.lineno,
+                # 'sys_levelno': record.levelno,
+                # 'sys_levelname': record.levelname,
+                # 'sys_filename': record.filename,
+                # 'sys_funcname': record.funcName,
+                # 'sys_exc_info': record.exc_info,
+                }
         # if 'sys_exc_info' in data and data['sys_exc_info']:
         #    data['sys_exc_info'] = self.formatException(data['sys_exc_info'])
 
@@ -45,16 +47,17 @@ class FluentRecordFormatter(object):
             if isinstance(key, basestring):
                 data[str(key)] = value
 
+
 class FluentHandler(logging.Handler):
     '''
     Logging Handler for fluent.
     '''
     def __init__(self,
-           tag,
-           host='localhost',
-           port=24224,
-           timeout=3.0,
-           verbose=False):
+                 tag,
+                 host='localhost',
+                 port=24224,
+                 timeout=3.0,
+                 verbose=False):
 
         self.tag = tag
         self.sender = sender.FluentSender(tag,

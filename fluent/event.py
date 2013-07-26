@@ -1,5 +1,9 @@
-from fluent import sender
+# -*- coding: utf-8 -*-
+
 import time
+
+from fluent import sender
+
 
 class Event(object):
     def __init__(self, label, data, **kwargs):

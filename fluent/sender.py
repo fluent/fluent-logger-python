@@ -1,10 +1,15 @@
+# -*- coding: utf-8 -*-
+
 from __future__ import print_function
-import msgpack
 import socket
 import threading
 import time
 
+import msgpack
+
+
 _global_sender = None
+
 
 def setup(tag, **kwargs):
     host = kwargs.get('host', 'localhost')
@@ -13,8 +18,10 @@ def setup(tag, **kwargs):
     global _global_sender
     _global_sender = FluentSender(tag, host=host, port=port)
 
+
 def get_global_sender():
     return _global_sender
+
 
 class FluentSender(object):
     def __init__(self,
@@ -36,7 +43,7 @@ class FluentSender(object):
         self.pendings = None
         self.packer = msgpack.Packer()
         self.lock = threading.Lock()
-        
+
         try:
             self._reconnect()
         except Exception:

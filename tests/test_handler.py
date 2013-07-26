@@ -1,7 +1,12 @@
-import unittest
-from tests import mockserver
+# -*- coding: utf-8 -*-
+
 import logging
+import unittest
+
 import fluent.handler
+
+from tests import mockserver
+
 
 class TestLogger(unittest.TestCase):
     def setUp(self):
@@ -11,23 +16,23 @@ class TestLogger(unittest.TestCase):
                 self._server = mockserver.MockRecvServer(port)
                 self._port = port
                 break
-            except IOError as e:
+            except IOError:
                 pass
 
     def get_data(self):
         return self._server.get_recieved()
 
     def test_simple(self):
-        h = fluent.handler.FluentHandler('app.follow', port=self._port)
+        handler = fluent.handler.FluentHandler('app.follow', port=self._port)
 
         logging.basicConfig(level=logging.INFO)
-        l = logging.getLogger('fluent.test')
-        l.addHandler(h)
-        l.info({
+        log = logging.getLogger('fluent.test')
+        log.addHandler(handler)
+        log.info({
             'from': 'userA',
             'to': 'userB'
         })
-        h._close()
+        handler._close()
 
         data = self.get_data()
         eq = self.assertEqual
