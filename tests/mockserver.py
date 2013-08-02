@@ -16,9 +16,13 @@ class MockRecvServer(threading.Thread):
     """
     Single threaded server accepts one connection and recv until EOF.
     """
-    def __init__(self, port):
-        self._sock = socket.socket()
-        self._sock.bind(('localhost', port))
+    def __init__(self, host='localhost', port=24224):
+        if host.startswith('unix://'):
+            self._sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            self._sock.bind(host[len('unix://'):])
+        else:
+            self._sock = socket.socket()
+            self._sock.bind((host, port))
         self._buf = BytesIO()
 
         threading.Thread.__init__(self)

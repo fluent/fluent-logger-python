@@ -8,7 +8,7 @@ from fluent import event, sender
 sender.setup(server='localhost', tag='app')
 
 
-class TestHandler(unittest.TestCase):
+class TestEvent(unittest.TestCase):
     def testLogging(self):
         # send event with tag app.follow
         event.Event('follow', {

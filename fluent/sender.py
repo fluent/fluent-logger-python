@@ -28,7 +28,7 @@ class FluentSender(object):
                  tag,
                  host='localhost',
                  port=24224,
-                 bufmax=1*1024*1024,
+                 bufmax=1 * 1024 * 1024,
                  timeout=3.0,
                  verbose=False):
 
@@ -102,9 +102,14 @@ class FluentSender(object):
 
     def _reconnect(self):
         if not self.socket:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(self.timeout)
-            sock.connect((self.host, self.port))
+            if self.host.startswith('unix://'):
+                sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+                sock.settimeout(self.timeout)
+                sock.connect(self.host[len('unix://'):])
+            else:
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(self.timeout)
+                sock.connect((self.host, self.port))
             self.socket = sock
 
     def _close(self):

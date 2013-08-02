@@ -8,12 +8,12 @@ import fluent.handler
 from tests import mockserver
 
 
-class TestLogger(unittest.TestCase):
+class TestHandler(unittest.TestCase):
     def setUp(self):
-        super(TestLogger, self).setUp()
+        super(TestHandler, self).setUp()
         for port in range(10000, 20000):
             try:
-                self._server = mockserver.MockRecvServer(port)
+                self._server = mockserver.MockRecvServer('localhost', port)
                 self._port = port
                 break
             except IOError:
