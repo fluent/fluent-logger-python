@@ -1,12 +1,16 @@
-import socket
-import threading
-import time
-from msgpack import Unpacker
+# -*- coding: utf-8 -*-
 
 try:
     from cStringIO import StringIO as BytesIO
 except ImportError:
     from io import BytesIO
+
+import socket
+import threading
+import time
+
+from msgpack import Unpacker
+
 
 class MockRecvServer(threading.Thread):
     """
@@ -21,16 +25,16 @@ class MockRecvServer(threading.Thread):
         self.start()
 
     def run(self):
-        s = self._sock
-        s.listen(1)
-        con, _ = s.accept()
+        sock = self._sock
+        sock.listen(1)
+        con, _ = sock.accept()
         while True:
-            d = con.recv(4096)
-            if not d:
+            data = con.recv(4096)
+            if not data:
                 break
-            self._buf.write(d)
+            self._buf.write(data)
         con.close()
-        s.close()
+        sock.close()
         self._sock = None
 
     def wait(self):
@@ -40,5 +44,6 @@ class MockRecvServer(threading.Thread):
     def get_recieved(self):
         self.wait()
         self._buf.seek(0)
-        # TODO: have to process string encoding properly. currently we assume that all encoding is utf-8.
+        # TODO: have to process string encoding properly. currently we assume
+        # that all encoding is utf-8.
         return list(Unpacker(self._buf, encoding='utf-8'))
