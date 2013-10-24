@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
-
 from __future__ import print_function
+import json
 import socket
 import threading
 import time
@@ -30,7 +30,8 @@ class FluentSender(object):
                  port=24224,
                  bufmax=1 * 1024 * 1024,
                  timeout=3.0,
-                 verbose=False):
+                 verbose=False,
+                 udp=False):
 
         self.tag = tag
         self.host = host
@@ -38,6 +39,12 @@ class FluentSender(object):
         self.bufmax = bufmax
         self.timeout = timeout
         self.verbose = verbose
+        self.udp = udp
+
+        if self.verbose:
+            print("Setting up fluent logger: {}:{} tag({}) bufmax({}) timeout({}) udp({})".format(
+                host, port, tag, bufmax, timeout, udp)
+            )
 
         self.socket = None
         self.pendings = None
@@ -46,7 +53,17 @@ class FluentSender(object):
 
         try:
             self._reconnect()
-        except Exception:
+        except Exception as ex:
+            if self.verbose:
+                print("An error occurred connecting to host @ "
+                      "{host}:{port} with tag {tag}. Error: {error}".format(
+                          host=self.host,
+                          port=self.port,
+                          tag=self.tag,
+                          error=ex
+                          )
+                      )
+
             # will be retried in emit()
             self._close()
 
@@ -66,12 +83,17 @@ class FluentSender(object):
         packet = (tag, timestamp, data)
         if self.verbose:
             print(packet)
-        return self.packer.pack(packet)
+
+        # In case of UDP, we can't use msgpack, we just serialize to JSON.
+        return json.dumps(packet) if self.udp else self.packer.pack(packet)
 
     def _send(self, bytes_):
         self.lock.acquire()
         try:
-            self._send_internal(bytes_)
+            if self.udp:  # If UDP, just send the data
+                self.socket.sendto(bytes_, (self.host, self.port))
+            else:
+                self._send_internal(bytes_)
         finally:
             self.lock.release()
 
@@ -90,7 +112,16 @@ class FluentSender(object):
 
             # send finished
             self.pendings = None
-        except Exception:
+        except Exception as ex:
+            if self.verbose:
+                print("An error occurred connecting to host @ "
+                      "{host}:{port} with tag {tag}. Error: {error}".format(
+                          host=self.host,
+                          port=self.port,
+                          tag=self.tag,
+                          error=ex
+                          )
+                      )
             # close socket
             self._close()
             # clear buffer if it exceeds max bufer size
@@ -102,7 +133,9 @@ class FluentSender(object):
 
     def _reconnect(self):
         if not self.socket:
-            if self.host.startswith('unix://'):
+            if self.udp:
+                sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
+            elif self.host.startswith('unix://'):
                 sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
                 sock.settimeout(self.timeout)
                 sock.connect(self.host[len('unix://'):])
@@ -116,3 +149,4 @@ class FluentSender(object):
         if self.socket:
             self.socket.close()
         self.socket = None
+

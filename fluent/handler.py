@@ -57,17 +57,21 @@ class FluentHandler(logging.Handler):
                  host='localhost',
                  port=24224,
                  timeout=3.0,
-                 verbose=False):
+                 verbose=False,
+                 udp=False,
+                 tag_level=False):
 
         self.tag = tag
+        self.tag_level = tag_level
         self.sender = sender.FluentSender(tag,
                                           host=host, port=port,
-                                          timeout=timeout, verbose=verbose)
+                                          timeout=timeout, verbose=verbose, udp=udp)
         logging.Handler.__init__(self)
 
     def emit(self, record):
         data = self.format(record)
-        self.sender.emit(None, data)
+        # If tag_level is true, we will append the log level to the tag with a dot
+        self.sender.emit(record.levelname.lower() if self.tag_level else None, data)
 
     def close(self):
         self.acquire()
