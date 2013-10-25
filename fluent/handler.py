@@ -67,6 +67,7 @@ class FluentHandler(logging.Handler):
                                           host=host, port=port,
                                           timeout=timeout, verbose=verbose, udp=udp)
         logging.Handler.__init__(self)
+        self.setFormatter(FluentRecordFormatter())
 
     def emit(self, record):
         data = self.format(record)
