@@ -22,7 +22,7 @@ This library is distributed as 'fluent-logger' python package. Please execute th
 Fluentd daemon must be lauched with the following configuration:
 
     <source>
-      type tcp
+      type forward
       port 24224
     </source>
 
