@@ -39,7 +39,7 @@ class FluentRecordFormatter(object):
             try:
                 self._add_dic(data, json.loads(str(msg)))
             except (ValueError, json.JSONDecodeError):
-                pass
+                self._add_dic(data, {'message': str(msg)})
 
     @staticmethod
     def _add_dic(data, dic):
@@ -57,17 +57,22 @@ class FluentHandler(logging.Handler):
                  host='localhost',
                  port=24224,
                  timeout=3.0,
-                 verbose=False):
+                 verbose=False,
+                 udp=False,
+                 tag_level=False):
 
         self.tag = tag
+        self.tag_level = tag_level
         self.sender = sender.FluentSender(tag,
                                           host=host, port=port,
-                                          timeout=timeout, verbose=verbose)
+                                          timeout=timeout, verbose=verbose, udp=udp)
         logging.Handler.__init__(self)
+        self.setFormatter(FluentRecordFormatter())
 
     def emit(self, record):
         data = self.format(record)
-        self.sender.emit(None, data)
+        # If tag_level is true, we will append the log level to the tag with a dot
+        self.sender.emit(record.levelname.lower() if self.tag_level else None, data)
 
     def close(self):
         self.acquire()
