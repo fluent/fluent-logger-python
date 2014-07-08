@@ -38,7 +38,7 @@ class FluentRecordFormatter(object):
         elif isinstance(msg, str):
             try:
                 self._add_dic(data, json.loads(str(msg)))
-            except (ValueError, json.JSONDecodeError):
+            except ValueError:
                 pass
 
     @staticmethod
