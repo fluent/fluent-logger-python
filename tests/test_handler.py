@@ -42,5 +42,5 @@ class TestHandler(unittest.TestCase):
         eq('app.follow', data[0][0])
         eq('userA', data[0][2]['from'])
         eq('userB', data[0][2]['to'])
-        self.assert_(data[0][1])
-        self.assert_(isinstance(data[0][1], int))
+        self.assertTrue(data[0][1])
+        self.assertTrue(isinstance(data[0][1], int))
