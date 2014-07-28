@@ -1,0 +1,8 @@
+# http://nedbatchelder.com/code/coverage/config.html#config
+
+[run]
+branch = True
+omit = */tests/*
+
+[report]
+omit = */tests/*
