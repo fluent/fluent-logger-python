@@ -8,6 +8,11 @@ try:
 except ImportError:
     import json
 
+try:
+    basestring
+except NameError:
+    basestring = (str, bytes)
+
 from fluent import sender
 
 
