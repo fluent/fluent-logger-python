@@ -52,7 +52,7 @@ class FluentRecordFormatter(logging.Formatter, object):
     def _structuring(self, data, msg):
         if isinstance(msg, dict):
             self._add_dic(data, msg)
-        elif isinstance(msg, str):
+        elif isinstance(msg, basestring):
             try:
                 self._add_dic(data, json.loads(str(msg)))
             except ValueError:
