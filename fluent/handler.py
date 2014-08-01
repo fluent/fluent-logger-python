@@ -56,7 +56,9 @@ class FluentRecordFormatter(logging.Formatter, object):
             try:
                 self._add_dic(data, json.loads(str(msg)))
             except ValueError:
-                pass
+                self._add_dic(data, {'message': msg})
+        else:
+            self._add_dic(data, {'message': msg})
 
     @staticmethod
     def _add_dic(data, dic):
