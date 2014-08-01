@@ -54,6 +54,7 @@ class TestHandler(unittest.TestCase):
             fluent.handler.FluentRecordFormatter(fmt={
                 'name': '%(name)s',
                 'lineno': '%(lineno)d',
+                'emitted_at': '%(asctime)s',
             })
         )
         log.addHandler(handler)
@@ -64,6 +65,7 @@ class TestHandler(unittest.TestCase):
         self.assertTrue('name' in data[0][2])
         self.assertEqual('fluent.test', data[0][2]['name'])
         self.assertTrue('lineno' in data[0][2])
+        self.assertTrue('emitted_at' in data[0][2])
 
     def test_unstructured_message(self):
         handler = fluent.handler.FluentHandler('app.follow', port=self._port)

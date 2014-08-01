@@ -2,6 +2,7 @@
 
 import logging
 import socket
+import sys
 
 try:
     import simplejson as json
@@ -38,6 +39,10 @@ class FluentRecordFormatter(logging.Formatter, object):
         self.hostname = socket.gethostname()
 
     def format(self, record):
+        # Only needed for python2.6
+        if sys.version_info[0:2] <= (2, 6) and self.usesTime():
+            record.asctime = self.formatTime(record, self.datefmt)
+
         # Compute attributes handled by parent class.
         super(FluentRecordFormatter, self).format(record)
         # Add ours
@@ -48,6 +53,10 @@ class FluentRecordFormatter(logging.Formatter, object):
 
         self._structuring(data, record.msg)
         return data
+
+    def usesTime(self):
+        return any([value.find('%(asctime)') >= 0
+                    for value in self._fmt_dict.values()])
 
     def _structuring(self, data, msg):
         """ Melds `msg` into `data`.
