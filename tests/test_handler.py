@@ -44,3 +44,23 @@ class TestHandler(unittest.TestCase):
         eq('userB', data[0][2]['to'])
         self.assertTrue(data[0][1])
         self.assertTrue(isinstance(data[0][1], int))
+
+    def test_custom_fmt(self):
+        handler = fluent.handler.FluentHandler('app.follow', port=self._port)
+
+        logging.basicConfig(level=logging.INFO)
+        log = logging.getLogger('fluent.test')
+        handler.setFormatter(
+            fluent.handler.FluentRecordFormatter(fmt={
+                'name': '%(name)s',
+                'lineno': '%(lineno)d',
+            })
+        )
+        log.addHandler(handler)
+        log.info({'sample': 'value'})
+        handler.close()
+
+        data = self.get_data()
+        self.assertTrue('name' in data[0][2])
+        self.assertEqual('fluent.test', data[0][2]['name'])
+        self.assertTrue('lineno' in data[0][2])

@@ -16,23 +16,35 @@ except NameError:  # pragma: no cover
 from fluent import sender
 
 
-class FluentRecordFormatter(object):
-    def __init__(self):
+class FluentRecordFormatter(logging.Formatter, object):
+    """ A structured formatter for Fluent.
+
+    Best used with server storing data in an ElasticSearch cluster for example.
+
+    :param fmt: a dict with format string as values to map to provided keys.
+    """
+    def __init__(self, fmt=None, datefmt=None):
+        super(FluentRecordFormatter, self).__init__(None, datefmt)
+
+        if not fmt:
+            self._fmt_dict = {
+                'sys_host': '%(hostname)s',
+                'sys_name': '%(name)s',
+                'sys_module': '%(module)s',
+            }
+        else:
+            self._fmt_dict = fmt
+
         self.hostname = socket.gethostname()
 
     def format(self, record):
-        data = {'sys_host': self.hostname,
-                'sys_name': record.name,
-                'sys_module': record.module,
-                # 'sys_lineno': record.lineno,
-                # 'sys_levelno': record.levelno,
-                # 'sys_levelname': record.levelname,
-                # 'sys_filename': record.filename,
-                # 'sys_funcname': record.funcName,
-                # 'sys_exc_info': record.exc_info,
-                }
-        # if 'sys_exc_info' in data and data['sys_exc_info']:
-        #    data['sys_exc_info'] = self.formatException(data['sys_exc_info'])
+        # Compute attributes handled by parent class.
+        super(FluentRecordFormatter, self).format(record)
+        # Add ours
+        record.hostname = self.hostname
+        # Apply format
+        data = dict([(key, value % record.__dict__)
+                     for key, value in self._fmt_dict.items()])
 
         self._structuring(data, record.msg)
         return data
