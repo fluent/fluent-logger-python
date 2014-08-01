@@ -50,6 +50,14 @@ class FluentRecordFormatter(logging.Formatter, object):
         return data
 
     def _structuring(self, data, msg):
+        """ Melds `msg` into `data`.
+
+        :param data: dictionary to be sent to fluent server
+        :param msg: :class:`LogRecord`'s message to add to `data`.
+          `msg` can be a simple string for backward compatibility with
+          :mod:`logging` framework, a JSON encoded string or a dictionary
+          that will be merged into dictionary generated in :meth:`format.
+        """
         if isinstance(msg, dict):
             self._add_dic(data, msg)
         elif isinstance(msg, basestring):
