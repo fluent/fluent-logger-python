@@ -3,6 +3,7 @@
 import logging
 import socket
 import sys
+import traceback
 
 try:
     import simplejson as json
@@ -21,6 +22,10 @@ class FluentRecordFormatter(logging.Formatter, object):
     """ A structured formatter for Fluent.
 
     Best used with server storing data in an ElasticSearch cluster for example.
+
+    Supports an extra `exc_traceback` format argument that represents a
+    traceback when logging an exception as return by
+    :meth:`traceback.extract_tb`.
 
     :param fmt: a dict with format string as values to map to provided keys.
     """
@@ -47,9 +52,17 @@ class FluentRecordFormatter(logging.Formatter, object):
         super(FluentRecordFormatter, self).format(record)
         # Add ours
         record.hostname = self.hostname
+
         # Apply format
-        data = dict([(key, value % record.__dict__)
-                     for key, value in self._fmt_dict.items()])
+        data = {}
+        for key, value in self._fmt_dict.items():
+            if value.find('%(exc_traceback)') >= 0:
+                if record.exc_info:
+                    data[key] = traceback.extract_tb(record.exc_info[2])
+                else:
+                    data[key] = None
+            else:
+                data[key] = value % record.__dict__
 
         self._structuring(data, record.msg)
         return data
