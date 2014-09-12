@@ -65,7 +65,9 @@ This client-library also has FluentHanler class for Python logging module.
     
     logging.basicConfig(level=logging.INFO)
     l = logging.getLogger('fluent.test')
-    l.addHandler(handler.FluentHandler('app.follow', host='host', port=24224))
+    h = handler.FluentHandler('app.follow', host='host', port=24224)
+    h.setFormatter(handler.FluentRecordFormatter())
+    l.addHandler(h)
     l.info({
       'from': 'userA',
       'to': 'userB'
