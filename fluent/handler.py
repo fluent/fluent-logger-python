@@ -29,7 +29,7 @@ from fluent import sender
 
 
 class FluentRecordFormatter(object):
-    def __init__(self):
+    def __init__(self, fmt=None, datefmt=None):
         self.hostname = socket.gethostname()
 
     def format(self, record):
