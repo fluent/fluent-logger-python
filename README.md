@@ -19,12 +19,14 @@ This library is distributed as 'fluent-logger' python package. Please execute th
 
 ## Configuration
 
-Fluentd daemon must be lauched with the following configuration:
+Fluentd daemon must be launched with a tcp source configuration:
 
     <source>
-      type tcp
+      type forward
       port 24224
     </source>
+
+To quickly test your setup, add a matcher that logs to the stdout:
 
     <match app.**>
       type stdout
