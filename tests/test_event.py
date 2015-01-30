@@ -9,7 +9,7 @@ sender.setup(server='localhost', tag='app')
 
 
 class TestEvent(unittest.TestCase):
-    def testLogging(self):
+    def test_logging(self):
         # send event with tag app.follow
         event.Event('follow', {
             'from': 'userA',

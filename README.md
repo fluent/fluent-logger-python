@@ -1,5 +1,7 @@
 # A Python structured logger for Fluentd
 
+[![Build Status](https://travis-ci.org/EvaSDK/fluent-logger-python.svg?branch=master)](https://travis-ci.org/EvaSDK/fluent-logger-python)
+[![Coverage Status](https://coveralls.io/repos/EvaSDK/fluent-logger-python/badge.png)](https://coveralls.io/r/EvaSDK/fluent-logger-python)
 
 Many web/mobile applications generate huge amount of event logs (c,f. login, logout, purchase, follow, etc). To analyze these event logs could be really valuable for improving the service. However, the challenge is collecting these logs easily and reliably.
 

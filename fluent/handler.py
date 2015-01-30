@@ -5,8 +5,13 @@ import socket
 
 try:
     import simplejson as json
-except ImportError:
+except ImportError:  # pragma: no cover
     import json
+
+try:
+    basestring
+except NameError:  # pragma: no cover
+    basestring = (str, bytes)
 
 from fluent import sender
 
