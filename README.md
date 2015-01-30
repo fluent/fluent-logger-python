@@ -58,7 +58,7 @@ Then, please create the events like this. This will send the event to fluent, wi
 
 ### Python logging.Handler interface
 
-This client-library also has FluentHanler class for Python logging module.
+This client-library also has FluentHandler class for Python logging module.
 
     import logging
     from fluent import handler
