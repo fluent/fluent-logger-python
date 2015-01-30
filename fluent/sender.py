@@ -4,9 +4,9 @@ from __future__ import print_function
 import socket
 import threading
 import time
-
+import urllib2, urllib
 import msgpack
-
+import sys
 
 _global_sender = None
 
@@ -21,6 +21,37 @@ def setup(tag, **kwargs):
 
 def get_global_sender():
     return _global_sender
+
+class FluentHTTPSender(object):
+    def __init__(self, tag, host='localhost', port=9880, events_max=20):
+        tag_path = tag.replace('.', '/')
+        self.url = '%s:%i/%s'%(host, port, tag_path)
+       	self.events = []
+        self.events_max = events_max
+        self.msgpack_packer = msgpack.Packer()
+
+    def emit(self, record):
+        if "time" not in record:
+            record["time"] = int(time.time())
+        self._buffer_or_send(time, record)
+
+    def _buffer_or_send(self, time, record):
+        self.events.append(record)
+        if len(self.events) > self.events_max:
+          self._send()
+    
+    def _send(self):
+        request = urllib2.Request(self.url)
+        data = urllib.urlencode({"msgpack":self.msgpack_packer.pack(self.events)})
+        request.add_data(data)
+        response = urllib2.urlopen(request)
+        if response.getcode() == 200:
+            self.events = [] # flushing the buffer
+        else:
+            print('Failed to flush the buffer', sys.stderr)
+
+    def __del__(self):
+        self._send()
 
 
 class FluentSender(object):
