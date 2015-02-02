@@ -43,9 +43,14 @@ class FluentSender(object):
         self.pendings = None
         self.lock = threading.Lock()
 
+        self._last_error_by_thread_id = {}
+
         try:
             self._reconnect()
-        except Exception:
+        except Exception as e:
+            # remember latest error
+            self.last_error = e
+
             # will be retried in emit()
             self._close()
 
@@ -81,15 +86,15 @@ class FluentSender(object):
             bytes_ = self.pendings
 
         try:
-            # reconnect if possible
+            # connect/reconnect if necessary
             self._reconnect()
 
             # send message
             self.socket.sendall(bytes_)
+        except Exception as e:
+            # remember latest error
+            self.last_error = e
 
-            # send finished
-            self.pendings = None
-        except Exception:
             # close socket
             self._close()
             # clear buffer if it exceeds max bufer size
@@ -98,6 +103,9 @@ class FluentSender(object):
                 self.pendings = None
             else:
                 self.pendings = bytes_
+        else:
+            # send finished
+            self.pendings = None
 
     def _reconnect(self):
         if not self.socket:
@@ -110,6 +118,29 @@ class FluentSender(object):
                 sock.settimeout(self.timeout)
                 sock.connect((self.host, self.port))
             self.socket = sock
+
+    @property
+    def last_error(self):
+        thread_id = threading.current_thread().ident
+        if thread_id in self._last_error_by_thread_id:
+            return self._last_error_by_thread_id[thread_id]
+        return None
+
+    @last_error.setter
+    def last_error(self, err):
+        thread_id = threading.current_thread().ident
+        self._last_error_by_thread_id[thread_id] = err
+
+    def clear_last_error(self, _thread_id=None):
+        if _thread_id is None:
+            thread_id = threading.current_thread().ident
+        else:
+            thread_id = _thread_id
+        del self._last_error_by_thread_id[thread_id]
+
+    def clear_errors_for_all_threads(self):
+        for thread_id in self._last_error_by_thread_id.keys():
+            self.clear_last_error(_thread_id=thread_id)
 
     def _close(self):
         if self.socket:
