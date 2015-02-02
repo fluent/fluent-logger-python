@@ -74,6 +74,10 @@ This client-library also has FluentHandler class for Python logging module.
       'from': 'userA',
       'to': 'userB'
     })
+
+## Testing
+
+Testing can be done using [nose](https://nose.readthedocs.org/en/latest/).
     
 ## Contributors
 
