@@ -43,7 +43,7 @@ class FluentSender(object):
         self.pendings = None
         self.lock = threading.Lock()
 
-        self._last_error_by_thread_id = {}
+        self._last_error_threadlocal = threading.local()
 
         try:
             self._reconnect()
@@ -121,26 +121,15 @@ class FluentSender(object):
 
     @property
     def last_error(self):
-        thread_id = threading.current_thread().ident
-        if thread_id in self._last_error_by_thread_id:
-            return self._last_error_by_thread_id[thread_id]
-        return None
+        return getattr(self._last_error_threadlocal, 'exception', None)
 
     @last_error.setter
     def last_error(self, err):
-        thread_id = threading.current_thread().ident
-        self._last_error_by_thread_id[thread_id] = err
+        self._last_error_threadlocal.exception = err
 
     def clear_last_error(self, _thread_id=None):
-        if _thread_id is None:
-            thread_id = threading.current_thread().ident
-        else:
-            thread_id = _thread_id
-        del self._last_error_by_thread_id[thread_id]
-
-    def clear_errors_for_all_threads(self):
-        for thread_id in self._last_error_by_thread_id.keys():
-            self.clear_last_error(_thread_id=thread_id)
+        if hasattr(self._last_error_threadlocal, 'exception'):
+            delattr(self._last_error_threadlocal, 'exception')
 
     def _close(self):
         if self.socket:

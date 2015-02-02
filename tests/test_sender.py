@@ -31,8 +31,6 @@ class TestSender(unittest.TestCase):
         sender._close()
         self.get_data()
 
-        sender.clear_errors_for_all_threads()
-
     def get_data(self):
         return self._server.get_recieved()
 
