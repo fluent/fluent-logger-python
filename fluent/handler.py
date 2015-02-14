@@ -16,35 +16,33 @@ except NameError:  # pragma: no cover
 from fluent import sender
 
 
-class FluentRecordFormatter(object):
-    def __init__(self):
-        self.hostname = socket.gethostname()
+class FluentRecordFormatter(logging.Formatter):
+    def __init__(self, fmt=None, datefmt=None):
+        super(FluentRecordFormatter, self).__init__(fmt, datefmt)
+        if isinstance(fmt, dict):
+            pass
+        elif isinstance(fmt, str):
+            try:
+                self._fmt = json.loads(str(fmt))
+            except ValueError:
+                self._fmt = self.default_format()
+        else:
+            self._fmt = self.default_format()
 
     def format(self, record):
-        data = {'sys_host': self.hostname,
-                'sys_name': record.name,
-                'sys_module': record.module,
-                # 'sys_lineno': record.lineno,
-                # 'sys_levelno': record.levelno,
-                # 'sys_levelname': record.levelname,
-                # 'sys_filename': record.filename,
-                # 'sys_funcname': record.funcName,
-                # 'sys_exc_info': record.exc_info,
-                }
-        # if 'sys_exc_info' in data and data['sys_exc_info']:
-        #    data['sys_exc_info'] = self.formatException(data['sys_exc_info'])
-
+        self.format_data(record)
+        data = dict([(key, value % record.__dict__) for key, value in self._fmt.items()])
         self._structuring(data, record.msg)
         return data
 
     def _structuring(self, data, msg):
         if isinstance(msg, dict):
             self._add_dic(data, msg)
-        elif isinstance(msg, str):
+        elif isinstance(msg, basestring):
             try:
                 self._add_dic(data, json.loads(str(msg)))
             except ValueError:
-                pass
+                self._add_dic(data, {'message': msg})
 
     @staticmethod
     def _add_dic(data, dic):
@@ -52,6 +50,28 @@ class FluentRecordFormatter(object):
             if isinstance(key, basestring):
                 data[str(key)] = value
 
+    def format_data(self, record):
+        record.message = record.getMessage()
+        if self.usesTime():
+            record.asctime = self.formatTime(record, self.datefmt)
+        if record.exc_info:
+            # Cache the traceback text to avoid converting it multiple times
+            # (it's constant anyway)
+            if not record.exc_text:
+                record.exc_text = self.formatException(record.exc_info)
+
+    def usesTime(self):
+        for _, value in self._fmt.items():
+            if value.find('%(asctime)') >= 0:
+                return True
+        return False
+
+    def default_format(self):
+        return {
+            'sys_host': socket.gethostname(),
+            'sys_name': '%(name)s',
+            'sys_module': '%(module)s'
+        }
 
 class FluentHandler(logging.Handler):
     '''
