@@ -16,24 +16,22 @@ except NameError:  # pragma: no cover
 from fluent import sender
 
 
-class FluentRecordFormatter(object):
-    def __init__(self):
+class FluentRecordFormatter(logging.Formatter):
+    def __init__(self, fmt=None, datefmt=None):
         self.hostname = socket.gethostname()
+        self.datefmt = datefmt
+        if isinstance(fmt, dict):
+            self._fmt = fmt
+        elif isinstance(fmt, str):
+            try:
+                self._fmt = json.loads(str(fmt))
+            except ValueError:
+                self._fmt = self.default_format()
+        else:
+            self._fmt = self.default_format()
 
     def format(self, record):
-        data = {'sys_host': self.hostname,
-                'sys_name': record.name,
-                'sys_module': record.module,
-                # 'sys_lineno': record.lineno,
-                # 'sys_levelno': record.levelno,
-                # 'sys_levelname': record.levelname,
-                # 'sys_filename': record.filename,
-                # 'sys_funcname': record.funcName,
-                # 'sys_exc_info': record.exc_info,
-                }
-        # if 'sys_exc_info' in data and data['sys_exc_info']:
-        #    data['sys_exc_info'] = self.formatException(data['sys_exc_info'])
-
+        data = self.format_data(record)
         self._structuring(data, record.msg)
         return data
 
@@ -52,6 +50,41 @@ class FluentRecordFormatter(object):
             if isinstance(key, basestring):
                 data[str(key)] = value
 
+    def format_data(self, record):
+        data = {}
+        for k, i in self._fmt.iteritems():
+            if i in record.__dict__.keys():
+                if i == 'exc_info' and record.exc_info:
+                    data[k] = self.formatException(record.exc_info)
+                else:
+                    if i == 'msg' and isinstance(record.msg, dict):
+                        pass
+                    elif i == 'msg' and isinstance(record.msg, str):
+                        try:
+                            json.loads(str(record.msg))
+                        except ValueError:
+                            data[k] = record.__dict__[i]
+                    else:
+                        data[k] = record.__dict__[i]
+            else:
+                data[k] = i
+        return data
+
+    def usesTime(self):
+        usesTime = False
+        if isinstance(self._fmt, dict):
+            usesTime = "asctime" in self._fmt
+        elif isinstance(self._fmt, str):
+            usesTime = self._fmt.find("asctime") >= 0
+        return usesTime
+
+    def default_format(self):
+        return {
+            'sys_host': self.hostname,
+            'sys_name': 'name',
+            'sys_module': 'module',
+            'message': 'msg'
+        }
 
 class FluentHandler(logging.Handler):
     '''
