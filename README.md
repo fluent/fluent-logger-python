@@ -63,17 +63,38 @@ Then, please create the events like this. This will send the event to fluent, wi
 ### Python logging.Handler interface
 
 This client-library also has FluentHandler class for Python logging module.
+Custom default entries or [LogRecord attributes](https://docs.python.org/2/library/logging.html#logrecord-attributes) can be used when creating FORMAT dictionary.
 
     import logging
     from fluent import handler
-    
+
+    FORMAT = {
+        'host': socket.gethostname(),
+        'error_line': 'lineno',
+        'error_file': 'filename',
+        'code': 'levelno',
+        'type': 'levelname',
+        'logger': 'name',
+        'module': 'module',
+        'function_name': 'funcName',
+        'stack_trace': 'exc_info',
+        'message': 'msg'
+    }
+
+    formatter = handler.FluentRecordFormatter(FORMAT)
+    fluent_handler = handler.FluentHandler('app.follow', host='host', port=24224)
+    fluent_handler.setFormatter(formatter)
+
     logging.basicConfig(level=logging.INFO)
     l = logging.getLogger('fluent.test')
-    l.addHandler(handler.FluentHandler('app.follow', host='host', port=24224))
+    l.addHandler(fluent_handler)
+
+    l.info("This log entry will be logged with key: 'message'.")
     l.info({
       'from': 'userA',
       'to': 'userB'
     })
+    l.info('{"from": "userC", "to": "userD"}')
 
 ## Testing
 
