@@ -67,6 +67,20 @@ class TestHandler(unittest.TestCase):
         self.assertTrue('lineno' in data[0][2])
         self.assertTrue('emitted_at' in data[0][2])
 
+    def test_json_encoded_message(self):
+        handler = fluent.handler.FluentHandler('app.follow', port=self._port)
+
+        logging.basicConfig(level=logging.INFO)
+        log = logging.getLogger('fluent.test')
+        handler.setFormatter(fluent.handler.FluentRecordFormatter())
+        log.addHandler(handler)
+        log.info('{"key": "hello world!", "param": "value"}')
+        handler.close()
+
+        data = self.get_data()
+        self.assertTrue('key' in data[0][2])
+        self.assertEqual('hello world!', data[0][2]['key'])
+
     def test_unstructured_message(self):
         handler = fluent.handler.FluentHandler('app.follow', port=self._port)
 
