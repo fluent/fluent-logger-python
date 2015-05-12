@@ -27,20 +27,27 @@ class TestHandler(unittest.TestCase):
 
         logging.basicConfig(level=logging.INFO)
         log = logging.getLogger('fluent.test')
-        handler.setFormatter(fluent.handler.FluentRecordFormatter())
+        formatter = fluent.handler.FluentRecordFormatter()
+        handler.setFormatter(formatter)
         log.addHandler(handler)
         log.info({
             'from': 'userA',
             'to': 'userB'
         })
+        log.info('{"from": "userC", "to": "userD"}')
+        log.info("Test log message")
         handler.close()
 
         data = self.get_data()
         eq = self.assertEqual
-        eq(1, len(data))
+        eq(3, len(data))
         eq(3, len(data[0]))
         eq('app.follow', data[0][0])
         eq('userA', data[0][2]['from'])
         eq('userB', data[0][2]['to'])
+        eq('userC', data[1][2]['from'])
+        eq('userD', data[1][2]['to'])
+        eq('Test log message', data[2][2]['message'])
+        self.assertFalse(formatter.usesTime())
         self.assertTrue(data[0][1])
         self.assertTrue(isinstance(data[0][1], int))
