@@ -38,7 +38,7 @@ To quickly test your setup, add a matcher that logs to the stdout:
 
 ### Event-Based Interface
 
-First, you need to call logger.setup() to create global logger instance. This call needs to be called only once, at the beggining of the application for example.
+First, you need to call `logger.setup()` to create global logger instance. This call needs to be called only once, at the beggining of the application for example.
 
 By default, the logger assumes fluentd daemon is launched locally. You can also specify remote logger by passing the options.
 
@@ -62,7 +62,7 @@ Then, please create the events like this. This will send the event to fluent, wi
 
 ### Python logging.Handler interface
 
-This client-library also has FluentHandler class for Python logging module.
+This client-library also has `FluentHandler` class for Python logging module.
 
     import logging
     from fluent import handler
