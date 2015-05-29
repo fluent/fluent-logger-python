@@ -17,7 +17,9 @@ Many web/mobile applications generate huge amount of event logs (c,f. login, log
 
 This library is distributed as 'fluent-logger' python package. Please execute the following command to install it.
 
-    $ pip install fluent-logger
+```sh
+$ pip install fluent-logger
+```
 
 ## Configuration
 
@@ -42,38 +44,44 @@ First, you need to call `logger.setup()` to create global logger instance. This 
 
 By default, the logger assumes fluentd daemon is launched locally. You can also specify remote logger by passing the options.
 
-    from fluent import sender
-    
-    # for local fluent
-    sender.setup('app')
-    
-    # for remote fluent
-    sender.setup('app', host='host', port=24224)
+```python
+from fluent import sender
+
+# for local fluent
+sender.setup('app')
+
+# for remote fluent
+sender.setup('app', host='host', port=24224)
+```
 
 Then, please create the events like this. This will send the event to fluent, with tag 'app.follow' and the attributes 'from' and 'to'.
 
-    from fluent import event
+```python
+from fluent import event
 
-    # send event to fluentd, with 'app.follow' tag
-    event.Event('follow', {
-      'from': 'userA',
-      'to':   'userB'
-    })
+# send event to fluentd, with 'app.follow' tag
+event.Event('follow', {
+  'from': 'userA',
+  'to':   'userB'
+})
+```
 
 ### Python logging.Handler interface
 
 This client-library also has `FluentHandler` class for Python logging module.
 
-    import logging
-    from fluent import handler
-    
-    logging.basicConfig(level=logging.INFO)
-    l = logging.getLogger('fluent.test')
-    l.addHandler(handler.FluentHandler('app.follow', host='host', port=24224))
-    l.info({
-      'from': 'userA',
-      'to': 'userB'
-    })
+```python
+import logging
+from fluent import handler
+
+logging.basicConfig(level=logging.INFO)
+l = logging.getLogger('fluent.test')
+l.addHandler(handler.FluentHandler('app.follow', host='host', port=24224))
+l.info({
+  'from': 'userA',
+  'to': 'userB'
+})
+```
 
 ## Testing
 
