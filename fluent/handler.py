@@ -2,6 +2,7 @@
 
 import logging
 import socket
+import sys
 
 try:
     import simplejson as json
@@ -16,35 +17,65 @@ except NameError:  # pragma: no cover
 from fluent import sender
 
 
-class FluentRecordFormatter(object):
-    def __init__(self):
+class FluentRecordFormatter(logging.Formatter, object):
+    """ A structured formatter for Fluent.
+
+    Best used with server storing data in an ElasticSearch cluster for example.
+
+    :param fmt: a dict with format string as values to map to provided keys.
+    """
+    def __init__(self, fmt=None, datefmt=None):
+        super(FluentRecordFormatter, self).__init__(None, datefmt)
+
+        if not fmt:
+            self._fmt_dict = {
+                'sys_host': '%(hostname)s',
+                'sys_name': '%(name)s',
+                'sys_module': '%(module)s',
+            }
+        else:
+            self._fmt_dict = fmt
+
         self.hostname = socket.gethostname()
 
     def format(self, record):
-        data = {'sys_host': self.hostname,
-                'sys_name': record.name,
-                'sys_module': record.module,
-                # 'sys_lineno': record.lineno,
-                # 'sys_levelno': record.levelno,
-                # 'sys_levelname': record.levelname,
-                # 'sys_filename': record.filename,
-                # 'sys_funcname': record.funcName,
-                # 'sys_exc_info': record.exc_info,
-                }
-        # if 'sys_exc_info' in data and data['sys_exc_info']:
-        #    data['sys_exc_info'] = self.formatException(data['sys_exc_info'])
+        # Only needed for python2.6
+        if sys.version_info[0:2] <= (2, 6) and self.usesTime():
+            record.asctime = self.formatTime(record, self.datefmt)
+
+        # Compute attributes handled by parent class.
+        super(FluentRecordFormatter, self).format(record)
+        # Add ours
+        record.hostname = self.hostname
+        # Apply format
+        data = dict([(key, value % record.__dict__)
+                     for key, value in self._fmt_dict.items()])
 
         self._structuring(data, record.msg)
         return data
 
+    def usesTime(self):
+        return any([value.find('%(asctime)') >= 0
+                    for value in self._fmt_dict.values()])
+
     def _structuring(self, data, msg):
+        """ Melds `msg` into `data`.
+
+        :param data: dictionary to be sent to fluent server
+        :param msg: :class:`LogRecord`'s message to add to `data`.
+          `msg` can be a simple string for backward compatibility with
+          :mod:`logging` framework, a JSON encoded string or a dictionary
+          that will be merged into dictionary generated in :meth:`format.
+        """
         if isinstance(msg, dict):
             self._add_dic(data, msg)
-        elif isinstance(msg, str):
+        elif isinstance(msg, basestring):
             try:
                 self._add_dic(data, json.loads(str(msg)))
             except ValueError:
-                pass
+                self._add_dic(data, {'message': msg})
+        else:
+            self._add_dic(data, {'message': msg})
 
     @staticmethod
     def _add_dic(data, dic):
