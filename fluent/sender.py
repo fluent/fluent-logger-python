@@ -19,11 +19,8 @@ def _set_global_sender(sender):
 
 
 def setup(tag, **kwargs):
-    host = kwargs.get('host', 'localhost')
-    port = kwargs.get('port', 24224)
-
     global _global_sender
-    _global_sender = FluentSender(tag, host=host, port=port)
+    _global_sender = FluentSender(tag, **kwargs)
 
 
 def get_global_sender():
@@ -37,7 +34,8 @@ class FluentSender(object):
                  port=24224,
                  bufmax=1 * 1024 * 1024,
                  timeout=3.0,
-                 verbose=False):
+                 verbose=False,
+                 **kwargs):
 
         self.tag = tag
         self.host = host
