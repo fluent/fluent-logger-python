@@ -11,6 +11,13 @@ import msgpack
 _global_sender = None
 
 
+def _set_global_sender(sender):
+    """ [For testing] Function to set global sender directly
+    """
+    global _global_sender
+    _global_sender = sender
+
+
 def setup(tag, **kwargs):
     host = kwargs.get('host', 'localhost')
     port = kwargs.get('port', 24224)
