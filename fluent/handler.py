@@ -3,6 +3,7 @@
 import logging
 import socket
 import sys
+import traceback
 
 try:
     import simplejson as json
@@ -51,6 +52,9 @@ class FluentRecordFormatter(logging.Formatter, object):
         data = dict([(key, value % record.__dict__)
                      for key, value in self._fmt_dict.items()])
 
+        if record.exc_info:
+            self._add_exception_to_record(record)
+
         self._structuring(data, record.msg)
         return data
 
@@ -82,6 +86,24 @@ class FluentRecordFormatter(logging.Formatter, object):
         for key, value in dic.items():
             if isinstance(key, basestring):
                 data[str(key)] = value
+
+    def _add_exception_to_record(self, record):
+        """
+        Adds a traceback to record.msg
+        """
+        tb = traceback.format_exception(*record.exc_info)
+        tb = ''.join(tb)
+
+        if isinstance(record.msg, dict):
+            record.msg.update({"traceback": tb})
+        elif isinstance(record.msg, basestring):
+            record.msg = {"message": record.msg,
+                          "traceback": tb}
+        else:
+            record.msg = {
+                "message": record.getMessage(),
+                "traceback": tb
+            }
 
 
 class FluentHandler(logging.Handler):
