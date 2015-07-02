@@ -74,15 +74,85 @@ This client-library also has `FluentHandler` class for Python logging module.
 import logging
 from fluent import handler
 
+custom_format = {
+  'host': '%(hostname)s',
+  'where': '%(module)s.%(funcName)s'
+  'type': '%(levelname)s',
+  'stack_trace': '%(exc_text)s'
+}
+
 logging.basicConfig(level=logging.INFO)
 l = logging.getLogger('fluent.test')
 h = handler.FluentHandler('app.follow', host='host', port=24224)
-h.setFormatter(handler.FluentRecordFormatter())
+formatter = handler.FluentRecordFormatter(custom_format)
+h.setFormatter(formatter)
 l.addHandler(h)
 l.info({
   'from': 'userA',
   'to': 'userB'
 })
+l.info('{"from": "userC", "to": "userD"}')
+l.info("This log entry will be logged with the additional key: 'message'.")
+```
+
+You can also customize formatter via logging.config.dictConfig
+
+```python
+import logging.config
+import yaml
+
+with open('logging.yaml') as fd:
+    conf = yaml.load(fd)
+
+logging.config.dictConfig(conf['logging'])
+```
+
+A sample configuration `logging.yaml` would be:
+
+```python
+logging:
+    version: 1
+
+    formatters:
+      brief:
+        format: '%(message)s'
+      default:
+        format: '%(asctime)s %(levelname)-8s %(name)-15s %(message)s'
+        datefmt: '%Y-%m-%d %H:%M:%S'
+      fluent_fmt:
+        '()': fluent.handler.FluentRecordFormatter
+        format:
+          level: '%(levelname)s'
+          hostname: '%(hostname)s'
+          where: '%(module)s.%(funcName)s'
+
+    handlers:
+        console:
+            class : logging.StreamHandler
+            level: DEBUG
+            formatter: default
+            stream: ext://sys.stdout
+        fluent:
+            class: fluent.handler.FluentHandler
+            host: localhost
+            port: 24224
+            tag: test.logging
+            formatter: fluent_fmt
+            level: DEBUG
+        null:
+            class: logging.NullHandler
+
+    loggers:
+        amqp:
+            handlers: [null]
+            propagate: False
+        conf:
+            handlers: [null]
+            propagate: False
+        '': # root logger
+            handlers: [console, fluent]
+            level: DEBUG
+            propagate: False
 ```
 
 ## Testing
