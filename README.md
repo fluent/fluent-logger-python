@@ -76,7 +76,7 @@ from fluent import handler
 
 custom_format = {
   'host': '%(hostname)s',
-  'where': '%(module)s.%(funcName)s'
+  'where': '%(module)s.%(funcName)s',
   'type': '%(levelname)s',
   'stack_trace': '%(exc_text)s'
 }
