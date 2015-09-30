@@ -51,14 +51,14 @@ class FluentRecordFormatter(logging.Formatter, object):
         data = dict([(key, value % record.__dict__)
                      for key, value in self._fmt_dict.items()])
 
-        self._structuring(data, record.msg)
+        self._structuring(data, record.msg, record.args)
         return data
 
     def usesTime(self):
         return any([value.find('%(asctime)') >= 0
                     for value in self._fmt_dict.values()])
 
-    def _structuring(self, data, msg):
+    def _structuring(self, data, msg, args):
         """ Melds `msg` into `data`.
 
         :param data: dictionary to be sent to fluent server
@@ -73,7 +73,7 @@ class FluentRecordFormatter(logging.Formatter, object):
             try:
                 self._add_dic(data, json.loads(str(msg)))
             except ValueError:
-                self._add_dic(data, {'message': msg})
+                self._add_dic(data, {'message': msg % args})
         else:
             self._add_dic(data, {'message': msg})
 
