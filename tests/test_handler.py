@@ -121,3 +121,18 @@ class TestHandler(unittest.TestCase):
         data = self.get_data()
         # For some reason, non-string keys are ignored
         self.assertFalse(42 in data[0][2])
+
+    def test_parse_json(self):
+        handler = fluent.handler.FluentHandler('app.follow', port=self._port, parse_json=True)
+
+        logging.basicConfig(level=logging.INFO)
+        log = logging.getLogger('fluent.test')
+        handler.setFormatter(logging.Formatter())
+        log.addHandler(handler)
+        log.info('{"key": "hello world!", "param": "value"}')
+        handler.close()
+
+        data = self.get_data()
+        # For some reason, non-string keys are ignored
+        self.assertTrue('key' in data[0][2])
+        self.assertEqual('hello world!', data[0][2]['key'])
