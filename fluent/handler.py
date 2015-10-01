@@ -93,16 +93,23 @@ class FluentHandler(logging.Handler):
                  host='localhost',
                  port=24224,
                  timeout=3.0,
-                 verbose=False):
+                 verbose=False,
+                 parse_json=False):
 
         self.tag = tag
         self.sender = sender.FluentSender(tag,
                                           host=host, port=port,
                                           timeout=timeout, verbose=verbose)
+        self.parse_json = parse_json
         logging.Handler.__init__(self)
 
     def emit(self, record):
         data = self.format(record)
+        if self.parse_json and isinstance(data, basestring):
+            try:
+                data = json.loads(data)
+            except ValueError:
+                pass
         self.sender.emit(None, data)
 
     def close(self):
