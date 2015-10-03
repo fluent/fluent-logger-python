@@ -88,7 +88,7 @@ class TestHandler(unittest.TestCase):
         log = logging.getLogger('fluent.test')
         handler.setFormatter(fluent.handler.FluentRecordFormatter())
         log.addHandler(handler)
-        log.info('hello world')
+        log.info('hello %s', 'world')
         handler.close()
 
         data = self.get_data()
