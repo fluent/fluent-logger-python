@@ -121,3 +121,44 @@ class TestHandler(unittest.TestCase):
         data = self.get_data()
         # For some reason, non-string keys are ignored
         self.assertFalse(42 in data[0][2])
+
+    def test_log_methods_arguments_processing(self):
+        handler = fluent.handler.FluentHandler('app.follow', port=self._port)
+
+        message = 'message %d.'
+        value = 8
+
+        logging.basicConfig(level=logging.INFO)
+        log = logging.getLogger('fluent.test')
+        log.handlers = []
+        handler.setFormatter(fluent.handler.FluentRecordFormatter())
+        log.addHandler(handler)
+        log.info(message, value)
+        handler.close()
+
+        data = self.get_data()
+
+        self.assertEqual(message % (value,), data[0][2]['message'])
+
+    def test_exception_logging_method(self):
+        handler = fluent.handler.FluentHandler('app.follow', port=self._port)
+
+        logging.basicConfig(level=logging.INFO)
+        log = logging.getLogger('fluent.test')
+        log.handlers = []
+        handler.setFormatter(fluent.handler.FluentRecordFormatter())
+        log.addHandler(handler)
+
+        def fail():
+            raise Exception('Fail')
+
+        try:
+            fail()
+        except Exception as exc:
+            log.exception(exc)
+
+        handler.close()
+
+        data = self.get_data()
+
+        self.assertTrue('Traceback' in data[0][2]['message'])
