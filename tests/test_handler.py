@@ -161,4 +161,4 @@ class TestHandler(unittest.TestCase):
 
         data = self.get_data()
 
-        self.assertIn('Traceback', data[0][2]['message'])
+        self.assertTrue('Traceback' in data[0][2]['message'])
