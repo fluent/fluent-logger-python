@@ -51,14 +51,14 @@ class FluentRecordFormatter(logging.Formatter, object):
         data = dict([(key, value % record.__dict__)
                      for key, value in self._fmt_dict.items()])
 
-        self._structuring(data, record.msg)
+        self._structuring(data, record)
         return data
 
     def usesTime(self):
         return any([value.find('%(asctime)') >= 0
                     for value in self._fmt_dict.values()])
 
-    def _structuring(self, data, msg):
+    def _structuring(self, data, record):
         """ Melds `msg` into `data`.
 
         :param data: dictionary to be sent to fluent server
@@ -67,15 +67,30 @@ class FluentRecordFormatter(logging.Formatter, object):
           :mod:`logging` framework, a JSON encoded string or a dictionary
           that will be merged into dictionary generated in :meth:`format.
         """
-        if isinstance(msg, dict):
-            self._add_dic(data, msg)
-        elif isinstance(msg, basestring):
+        if isinstance(record.msg, dict):
+            self._add_dic(data, record.msg)
+        elif isinstance(record.msg, basestring):
             try:
-                self._add_dic(data, json.loads(str(msg)))
+                self._add_dic(data, json.loads(str(record.msg)))
             except ValueError:
-                self._add_dic(data, {'message': msg})
+                self._add_dic(data, {'message': record.getMessage()})
+        elif isinstance(record.msg, Exception):
+            if hasattr(self, 'formatMessage'):
+                s = self.formatMessage(record)
+            else:
+                s = self._fmt % record.__dict__
+
+            if record.exc_text:
+                if s[-1:] != "\n":
+                    s = s + "\n"
+                s = s + record.exc_text
+            if hasattr(record, 'stack_info') and record.stack_info:
+                if s[-1:] != "\n":
+                    s = s + "\n"
+                s = s + self.formatStack(record.stack_info)
+            self._add_dic(data, {'message': s})
         else:
-            self._add_dic(data, {'message': msg})
+            self._add_dic(data, {'message': record.msg})
 
     @staticmethod
     def _add_dic(data, dic):
