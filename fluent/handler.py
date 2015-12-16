@@ -51,7 +51,7 @@ class FluentRecordFormatter(logging.Formatter, object):
         data = dict([(key, value % record.__dict__)
                      for key, value in self._fmt_dict.items()])
 
-        self._structuring(data, record.msg)
+        self._structuring(data, record.getMessage())
         return data
 
     def usesTime(self):
