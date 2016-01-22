@@ -7,7 +7,7 @@ try:
 except ImportError:
     from distutils.core import setup
 
-README = path.abspath(path.join(path.dirname(__file__), 'README.md'))
+README = path.abspath(path.join(path.dirname(__file__), 'README.rst'))
 desc = 'A Python logging handler for Fluentd event collector'
 
 setup(
