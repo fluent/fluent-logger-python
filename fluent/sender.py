@@ -4,6 +4,7 @@ from __future__ import print_function
 import socket
 import threading
 import time
+import traceback
 
 import msgpack
 
@@ -54,7 +55,13 @@ class FluentSender(object):
         self.emit_with_time(label, cur_time, data)
 
     def emit_with_time(self, label, timestamp, data):
-        bytes_ = self._make_packet(label, timestamp, data)
+        try:
+            bytes_ = self._make_packet(label, timestamp, data)
+        except Exception:
+            bytes_ = self._make_packet(label, timestamp,
+                                       {"level": "CRITICAL",
+                                        "message": "Can't output to log",
+                                        "traceback": traceback.format_exc()})
         self._send(bytes_)
 
     def _make_packet(self, label, timestamp, data):
