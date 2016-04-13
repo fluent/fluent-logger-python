@@ -8,6 +8,36 @@ import fluent.sender
 from tests import mockserver
 
 
+class TestSetup(unittest.TestCase):
+    def tearDown(self):
+        from fluent.sender import _set_global_sender
+        _set_global_sender(None)
+
+    def test_no_kwargs(self):
+        fluent.sender.setup("tag")
+        actual = fluent.sender.get_global_sender()
+        self.assertEqual(actual.tag, "tag")
+        self.assertEqual(actual.host, "localhost")
+        self.assertEqual(actual.port, 24224)
+        self.assertEqual(actual.timeout, 3.0)
+
+    def test_host_and_port(self):
+        fluent.sender.setup("tag", host="myhost", port=24225)
+        actual = fluent.sender.get_global_sender()
+        self.assertEqual(actual.tag, "tag")
+        self.assertEqual(actual.host, "myhost")
+        self.assertEqual(actual.port, 24225)
+        self.assertEqual(actual.timeout, 3.0)
+
+    def test_tolerant(self):
+        fluent.sender.setup("tag", host="myhost", port=24225, timeout=1.0)
+        actual = fluent.sender.get_global_sender()
+        self.assertEqual(actual.tag, "tag")
+        self.assertEqual(actual.host, "myhost")
+        self.assertEqual(actual.port, 24225)
+        self.assertEqual(actual.timeout, 1.0)
+
+
 class TestSender(unittest.TestCase):
     def setUp(self):
         super(TestSender, self).setUp()
