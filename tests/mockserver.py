@@ -23,6 +23,7 @@ class MockRecvServer(threading.Thread):
         else:
             self._sock = socket.socket()
             self._sock.bind((host, port))
+        self._sock.listen(1)
         self._buf = BytesIO()
 
         threading.Thread.__init__(self)
@@ -30,7 +31,6 @@ class MockRecvServer(threading.Thread):
 
     def run(self):
         sock = self._sock
-        sock.listen(1)
         con, _ = sock.accept()
         while True:
             data = con.recv(4096)
