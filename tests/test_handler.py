@@ -95,6 +95,20 @@ class TestHandler(unittest.TestCase):
         self.assertTrue('message' in data[0][2])
         self.assertEqual('hello world', data[0][2]['message'])
 
+    def test_unstructured_formatted_message(self):
+        handler = fluent.handler.FluentHandler('app.follow', port=self._port)
+
+        logging.basicConfig(level=logging.INFO)
+        log = logging.getLogger('fluent.test')
+        handler.setFormatter(fluent.handler.FluentRecordFormatter())
+        log.addHandler(handler)
+        log.info('hello world, %s', 'you!')
+        handler.close()
+
+        data = self.get_data()
+        self.assertTrue('message' in data[0][2])
+        self.assertEqual('hello world, you!', data[0][2]['message'])
+
     def test_non_string_simple_message(self):
         handler = fluent.handler.FluentHandler('app.follow', port=self._port)
 
