@@ -41,13 +41,9 @@ class TestSetup(unittest.TestCase):
 class TestSender(unittest.TestCase):
     def setUp(self):
         super(TestSender, self).setUp()
-        for port in range(10000, 20000):
-            try:
-                self._server = mockserver.MockRecvServer('localhost', port)
-                break
-            except IOError as exc:
-                print(exc)
-        self._sender = fluent.sender.FluentSender(tag='test', port=port)
+        self._server = mockserver.MockRecvServer('localhost')
+        self._sender = fluent.sender.FluentSender(tag='test',
+                                                  port=self._server.port)
 
     def get_data(self):
         return self._server.get_recieved()

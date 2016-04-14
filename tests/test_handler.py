@@ -11,13 +11,8 @@ from tests import mockserver
 class TestHandler(unittest.TestCase):
     def setUp(self):
         super(TestHandler, self).setUp()
-        for port in range(10000, 20000):
-            try:
-                self._server = mockserver.MockRecvServer('localhost', port)
-                self._port = port
-                break
-            except IOError:
-                pass
+        self._server = mockserver.MockRecvServer('localhost')
+        self._port = self._server.port
 
     def get_data(self):
         return self._server.get_recieved()
