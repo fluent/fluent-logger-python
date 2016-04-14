@@ -12,6 +12,6 @@ install:
     - "pip install -e ."
     - "pip install 'coverage>=3.7,<3.8' coveralls"
 script:
-    - "python ./setup.py nosetests"
+    - "PYTHONFAULTHANDLER=x timeout -sABRT 30s nosetests -vsd"
 after_success:
     - coveralls
