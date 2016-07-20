@@ -25,6 +25,7 @@ Requirements
 ------------
 
 -  Python 2.6 or greater including 3.x
+- ``msgpack-python``
 
 Installation
 ------------
