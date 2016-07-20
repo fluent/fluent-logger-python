@@ -51,7 +51,7 @@ class FluentSender(object):
 
         try:
             self._reconnect()
-        except Exception:
+        except socket.error:
             # will be retried in emit()
             self._close()
 
@@ -101,7 +101,7 @@ class FluentSender(object):
 
             # send finished
             self.pendings = None
-        except Exception:
+        except socket.error as e:
             # close socket
             self._close()
             # clear buffer if it exceeds max bufer size
