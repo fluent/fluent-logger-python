@@ -81,11 +81,12 @@ class FluentSender(object):
                     self._send_data(self.pendings)
                 except Exception:
                     self._call_buffer_overflow_handler(self.pendings)
+
+            self._close()
+            self.pendings = None
         finally:
             self.lock.release()
 
-        self._close()
-        self.pendings = None
 
     def _make_packet(self, label, timestamp, data):
         if label:
