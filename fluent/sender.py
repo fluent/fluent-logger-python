@@ -27,6 +27,8 @@ def setup(tag, **kwargs):
 def get_global_sender():
     return _global_sender
 
+def close():
+    get_global_sender().close()
 
 class FluentSender(object):
     def __init__(self,
@@ -71,6 +73,20 @@ class FluentSender(object):
                                         "traceback": traceback.format_exc()})
         self._send(bytes_)
 
+    def close(self):
+        self.lock.acquire()
+        try:
+            if self.pendings:
+                try:
+                    self._send_data(self.pendings)
+                except Exception:
+                    self._call_buffer_overflow_handler(self.pendings)
+        finally:
+            self.lock.release()
+
+        self._close()
+        self.pendings = None
+
     def _make_packet(self, label, timestamp, data):
         if label:
             tag = '.'.join((self.tag, label))
@@ -95,11 +111,7 @@ class FluentSender(object):
             bytes_ = self.pendings
 
         try:
-            # reconnect if possible
-            self._reconnect()
-
-            # send message
-            self.socket.sendall(bytes_)
+            self._send_data(bytes_)
 
             # send finished
             self.pendings = None
@@ -112,6 +124,12 @@ class FluentSender(object):
                 self.pendings = None
             else:
                 self.pendings = bytes_
+
+    def _send_data(self, bytes_):
+        # reconnect if possible
+        self._reconnect()
+        # send message
+        self.socket.sendall(bytes_)
 
     def _reconnect(self):
         if not self.socket:

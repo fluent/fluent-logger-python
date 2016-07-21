@@ -93,6 +93,12 @@ fluent, with tag 'app.follow' and the attributes 'from' and 'to'.
       'to':   'userB'
     })
 
+If you want to shutdown the client, call `close()` method.
+
+.. code:: python
+
+    sender.close()
+
 Handler for buffer overflow
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -111,6 +117,8 @@ You can inject your own custom proc to handle buffer overflow in the event of co
     sender.setup('app', host='host', port=24224, buffer_overflow_handler=handler)
 
 You should handle any exception in handler. fluent-logger ignores exceptions from ``buffer_overflow_handler``.
+
+This handler is also called when pending events exist during `close()`.
 
 Python logging.Handler interface
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
