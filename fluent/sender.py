@@ -36,6 +36,7 @@ class FluentSender(object):
                  bufmax=1 * 1024 * 1024,
                  timeout=3.0,
                  verbose=False,
+                 buffer_overflow_handler=None,
                  **kwargs):
 
         self.tag = tag
@@ -44,6 +45,7 @@ class FluentSender(object):
         self.bufmax = bufmax
         self.timeout = timeout
         self.verbose = verbose
+        self.buffer_overflow_handler = buffer_overflow_handler
 
         self.socket = None
         self.pendings = None
@@ -106,7 +108,7 @@ class FluentSender(object):
             self._close()
             # clear buffer if it exceeds max bufer size
             if self.pendings and (len(self.pendings) > self.bufmax):
-                # TODO: add callback handler here
+                self._call_buffer_overflow_handler(self.pendings)
                 self.pendings = None
             else:
                 self.pendings = bytes_
@@ -122,6 +124,14 @@ class FluentSender(object):
                 sock.settimeout(self.timeout)
                 sock.connect((self.host, self.port))
             self.socket = sock
+
+    def _call_buffer_overflow_handler(self, pending_events):
+        try:
+            if self.buffer_overflow_handler:
+                self.buffer_overflow_handler(pending_events)
+        except Exception as e:
+            # User should care any exception in handler
+            pass
 
     def _close(self):
         if self.socket:

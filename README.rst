@@ -93,6 +93,25 @@ fluent, with tag 'app.follow' and the attributes 'from' and 'to'.
       'to':   'userB'
     })
 
+Handler for buffer overflow
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+You can inject your own custom proc to handle buffer overflow in the event of connection failure. This will mitigate the loss of data instead of simply throwing data away.
+
+.. code:: python
+
+    import msgpack
+    from io import BytesIO
+
+    def handler(pendings):
+        unpacker = msgpack.Unpacker(BytesIO(pendings))
+        for unpacked in unpacker:
+            print(unpacked)
+
+    sender.setup('app', host='host', port=24224, buffer_overflow_handler=handler)
+
+You should handle any exception in handler. fluent-logger ignores exceptions from ``buffer_overflow_handler``.
+
 Python logging.Handler interface
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
