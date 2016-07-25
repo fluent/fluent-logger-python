@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 import unittest
-from unittest.mock import patch
 
 from fluent import event, sender
 from tests import mockserver
@@ -46,7 +45,7 @@ class TestEvent(unittest.TestCase):
         sender.close()
 
     @unittest.skip("This test failed with 'TypeError: catching classes that do not inherit from BaseException is not allowed' so skipped")
-    @patch('fluent.sender.socket')
+    #@patch('fluent.sender.socket')
     def test_connect_exception_during_event_send(self, mock_socket):
         # Make the socket.socket().connect() call raise a custom exception
         mock_connect = mock_socket.socket.return_value.connect
