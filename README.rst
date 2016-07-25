@@ -60,15 +60,60 @@ To quickly test your setup, add a matcher that logs to the stdout:
 Usage
 -----
 
-Event-Based Interface
-~~~~~~~~~~~~~~~~~~~~~
+FluentSender Interface
+~~~~~~~~~~~~~~~~~~~~~~
 
-First, you need to call ``logger.setup()`` to create global logger
-instance. This call needs to be called only once, at the beggining of
-the application for example.
+`sender.FluentSender` is a structured event logger for Fluentd.
 
 By default, the logger assumes fluentd daemon is launched locally. You
 can also specify remote logger by passing the options.
+
+.. code:: python
+
+    from fluent import sender
+
+    # for local fluent
+    logger = sender.FluentSender('app')
+
+    # for remote fluent
+    logger = sender.FluentSender('app', host='host', port=24224)
+
+For sending event, call `emit` method with your event. Following example will send the event to
+fluentd, with tag 'app.follow' and the attributes 'from' and 'to'.
+
+.. code:: python
+
+    # Use current time
+    logger.emit('follow', {'from': 'userA', 'to': 'userB'})
+
+    # Specify optional time
+    cur_time = int(time.time())
+    logger.emit_with_time('follow', cur_time, {'from': 'userA', 'to':'userB'})
+
+You can detect an error via return value of `emit`. If an error happens in `emit`, `emit` returns `False` and get an error object using `last_error` method.
+
+.. code:: python
+
+    if not logger.emit('follow', {'from': 'userA', 'to': 'userB'}):
+        print(logger.last_error)
+        logger.clear_last_error() # clear stored error after handled errors
+
+If you want to shutdown the client, call `close()` method.
+
+.. code:: python
+
+    logger.close()
+
+Event-Based Interface
+~~~~~~~~~~~~~~~~~~~~~
+
+This API is a wrapper for `sender.FluentSender`.
+
+First, you need to call ``sender.setup()`` to create global `sender.FluentSender` logger
+instance. This call needs to be called only once, at the beggining of
+the application for example.
+
+Initialization code of Event-Based API is below:
 
 .. code:: python
 
@@ -81,7 +126,7 @@ can also specify remote logger by passing the options.
     sender.setup('app', host='host', port=24224)
 
 Then, please create the events like this. This will send the event to
-fluent, with tag 'app.follow' and the attributes 'from' and 'to'.
+fluentd, with tag 'app.follow' and the attributes 'from' and 'to'.
 
 .. code:: python
 
@@ -93,11 +138,14 @@ fluent, with tag 'app.follow' and the attributes 'from' and 'to'.
       'to':   'userB'
     })
 
-If you want to shutdown the client, call `close()` method.
+`event.Event` has one limitation which can't return success/failure result.
+
+Other methods for Event-Based Interface.
 
 .. code:: python
 
-    sender.close()
+    sender.get_global_sender # get instance of global sender
+    sender.close # Call FluentSender#close
 
 Handler for buffer overflow
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -114,7 +162,7 @@ You can inject your own custom proc to handle buffer overflow in the event of co
         for unpacked in unpacker:
             print(unpacked)
 
-    sender.setup('app', host='host', port=24224, buffer_overflow_handler=handler)
+    logger = sender.FluentSender('app', host='host', port=24224, buffer_overflow_handler=handler)
 
 You should handle any exception in handler. fluent-logger ignores exceptions from ``buffer_overflow_handler``.
 
