@@ -106,7 +106,7 @@ class FluentHandler(logging.Handler):
 
     def emit(self, record):
         data = self.format(record)
-        self.sender.emit(None, data)
+        return self.sender.emit(None, data)
 
     def close(self):
         self.acquire()

@@ -61,7 +61,7 @@ class FluentSender(object):
 
     def emit(self, label, data):
         cur_time = int(time.time())
-        self.emit_with_time(label, cur_time, data)
+        return self.emit_with_time(label, cur_time, data)
 
     def emit_with_time(self, label, timestamp, data):
         try:
@@ -71,7 +71,7 @@ class FluentSender(object):
                                        {"level": "CRITICAL",
                                         "message": "Can't output to log",
                                         "traceback": traceback.format_exc()})
-        self._send(bytes_)
+        return self._send(bytes_)
 
     def close(self):
         self.lock.acquire()
@@ -101,7 +101,7 @@ class FluentSender(object):
     def _send(self, bytes_):
         self.lock.acquire()
         try:
-            self._send_internal(bytes_)
+            return self._send_internal(bytes_)
         finally:
             self.lock.release()
 
@@ -116,15 +116,20 @@ class FluentSender(object):
 
             # send finished
             self.pendings = None
+
+            return True
         except socket.error as e:
             # close socket
             self._close()
+
             # clear buffer if it exceeds max bufer size
             if self.pendings and (len(self.pendings) > self.bufmax):
                 self._call_buffer_overflow_handler(self.pendings)
                 self.pendings = None
             else:
                 self.pendings = bytes_
+
+            return False
 
     def _send_data(self, bytes_):
         # reconnect if possible
