@@ -52,6 +52,7 @@ class FluentSender(object):
         self.socket = None
         self.pendings = None
         self.lock = threading.Lock()
+        self._last_error_threadlocal = threading.local()
 
         try:
             self._reconnect()
@@ -66,7 +67,8 @@ class FluentSender(object):
     def emit_with_time(self, label, timestamp, data):
         try:
             bytes_ = self._make_packet(label, timestamp, data)
-        except Exception:
+        except Exception as e:
+            self.last_error = e
             bytes_ = self._make_packet(label, timestamp,
                                        {"level": "CRITICAL",
                                         "message": "Can't output to log",
@@ -119,6 +121,9 @@ class FluentSender(object):
 
             return True
         except socket.error as e:
+        #except Exception as e:
+            self.last_error = e
+
             # close socket
             self._close()
 
@@ -156,6 +161,18 @@ class FluentSender(object):
         except Exception as e:
             # User should care any exception in handler
             pass
+
+    @property
+    def last_error(self):
+        return getattr(self._last_error_threadlocal, 'exception', None)
+
+    @last_error.setter
+    def last_error(self, err):
+        self._last_error_threadlocal.exception  =  err
+
+    def clear_last_error(self, _thread_id = None):
+        if hasattr(self._last_error_threadlocal, 'exception'):
+            delattr(self._last_error_threadlocal, 'exception')
 
     def _close(self):
         if self.socket:
