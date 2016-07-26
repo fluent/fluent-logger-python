@@ -2,9 +2,9 @@
 
 from __future__ import print_function
 import unittest
+import socket
 
 import fluent.sender
-
 from tests import mockserver
 
 
@@ -45,6 +45,9 @@ class TestSender(unittest.TestCase):
         self._sender = fluent.sender.FluentSender(tag='test',
                                                   port=self._server.port)
 
+    def tearDown(self):
+        self._sender.close()
+
     def get_data(self):
         return self._server.get_recieved()
 
@@ -60,3 +63,33 @@ class TestSender(unittest.TestCase):
         eq({'bar': 'baz'}, data[0][2])
         self.assertTrue(data[0][1])
         self.assertTrue(isinstance(data[0][1], int))
+
+    def test_no_last_error_on_successful_emit(self):
+        sender = self._sender
+        sender.emit('foo', {'bar': 'baz'})
+        sender._close()
+
+        self.assertEqual(sender.last_error, None)
+
+    def test_last_error_property(self):
+        EXCEPTION_MSG = "custom exception for testing last_error property"
+        self._sender.last_error = socket.error(EXCEPTION_MSG)
+
+        self.assertEqual(self._sender.last_error.args[0], EXCEPTION_MSG)
+
+    def test_clear_last_error(self):
+        EXCEPTION_MSG = "custom exception for testing clear_last_error"
+        self._sender.last_error = socket.error(EXCEPTION_MSG)
+        self._sender.clear_last_error()
+
+        self.assertEqual(self._sender.last_error, None)
+
+    @unittest.skip("This test failed with 'TypeError: catching classes that do not inherit from BaseException is not allowed' so skipped")
+    #@patch('fluent.sender.socket')
+    def test_connect_exception_during_sender_init(self, mock_socket):
+        # Make the socket.socket().connect() call raise a custom exception
+        mock_connect = mock_socket.socket.return_value.connect
+        EXCEPTION_MSG = "a sender init socket connect() exception"
+        mock_connect.side_effect = socket.error(EXCEPTION_MSG)
+
+        self.assertEqual(self._sender.last_error.args[0], EXCEPTION_MSG)

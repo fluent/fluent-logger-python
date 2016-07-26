@@ -52,6 +52,7 @@ class FluentSender(object):
         self.socket = None
         self.pendings = None
         self.lock = threading.Lock()
+        self._last_error_threadlocal = threading.local()
 
         try:
             self._reconnect()
@@ -61,17 +62,18 @@ class FluentSender(object):
 
     def emit(self, label, data):
         cur_time = int(time.time())
-        self.emit_with_time(label, cur_time, data)
+        return self.emit_with_time(label, cur_time, data)
 
     def emit_with_time(self, label, timestamp, data):
         try:
             bytes_ = self._make_packet(label, timestamp, data)
-        except Exception:
+        except Exception as e:
+            self.last_error = e
             bytes_ = self._make_packet(label, timestamp,
                                        {"level": "CRITICAL",
                                         "message": "Can't output to log",
                                         "traceback": traceback.format_exc()})
-        self._send(bytes_)
+        return self._send(bytes_)
 
     def close(self):
         self.lock.acquire()
@@ -101,7 +103,7 @@ class FluentSender(object):
     def _send(self, bytes_):
         self.lock.acquire()
         try:
-            self._send_internal(bytes_)
+            return self._send_internal(bytes_)
         finally:
             self.lock.release()
 
@@ -116,15 +118,23 @@ class FluentSender(object):
 
             # send finished
             self.pendings = None
+
+            return True
         except socket.error as e:
+        #except Exception as e:
+            self.last_error = e
+
             # close socket
             self._close()
+
             # clear buffer if it exceeds max bufer size
             if self.pendings and (len(self.pendings) > self.bufmax):
                 self._call_buffer_overflow_handler(self.pendings)
                 self.pendings = None
             else:
                 self.pendings = bytes_
+
+            return False
 
     def _send_data(self, bytes_):
         # reconnect if possible
@@ -151,6 +161,18 @@ class FluentSender(object):
         except Exception as e:
             # User should care any exception in handler
             pass
+
+    @property
+    def last_error(self):
+        return getattr(self._last_error_threadlocal, 'exception', None)
+
+    @last_error.setter
+    def last_error(self, err):
+        self._last_error_threadlocal.exception  =  err
+
+    def clear_last_error(self, _thread_id = None):
+        if hasattr(self._last_error_threadlocal, 'exception'):
+            delattr(self._last_error_threadlocal, 'exception')
 
     def _close(self):
         if self.socket:
