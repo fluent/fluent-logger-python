@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function
+import struct
 import socket
 import threading
 import time
@@ -29,6 +30,14 @@ def get_global_sender():
 
 def close():
     get_global_sender().close()
+
+
+class EventTime(msgpack.ExtType):
+    def __new__(cls, timestamp):
+        seconds = int(timestamp)
+        nanoseconds = int(timestamp % 1 * 10 ** 9)
+        return super(EventTime, cls).__new__(cls, code=0, data=struct.pack(">II", seconds, nanoseconds))
+
 
 class FluentSender(object):
     def __init__(self,
@@ -61,7 +70,7 @@ class FluentSender(object):
             self._close()
 
     def emit(self, label, data):
-        cur_time = int(time.time())
+        cur_time = EventTime(time.time())
         return self.emit_with_time(label, cur_time, data)
 
     def emit_with_time(self, label, timestamp, data):
