@@ -244,15 +244,15 @@ A sample configuration ``logging.yaml`` would be:
                 tag: test.logging
                 formatter: fluent_fmt
                 level: DEBUG
-            null:
+            none:
                 class: logging.NullHandler
 
         loggers:
             amqp:
-                handlers: [null]
+                handlers: [none]
                 propagate: False
             conf:
-                handlers: [null]
+                handlers: [none]
                 propagate: False
             '': # root logger
                 handlers: [console, fluent]
