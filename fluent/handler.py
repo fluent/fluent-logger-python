@@ -24,7 +24,7 @@ class FluentRecordFormatter(logging.Formatter, object):
 
     :param fmt: a dict with format string as values to map to provided keys.
     """
-    def __init__(self, fmt=None, datefmt=None):
+    def __init__(self, fmt=None, datefmt=None, style='%'):
         super(FluentRecordFormatter, self).__init__(None, datefmt)
 
         if not fmt:
