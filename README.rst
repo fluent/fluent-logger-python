@@ -110,7 +110,7 @@ Event-Based Interface
 This API is a wrapper for `sender.FluentSender`.
 
 First, you need to call ``sender.setup()`` to create global `sender.FluentSender` logger
-instance. This call needs to be called only once, at the beggining of
+instance. This call needs to be called only once, at the beginning of
 the application for example.
 
 Initialization code of Event-Based API is below:
