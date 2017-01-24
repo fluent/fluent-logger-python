@@ -146,6 +146,19 @@ class TestHandler(unittest.TestCase):
         self.assertTrue('message' in data[0][2])
         self.assertEqual('hello world, you!', data[0][2]['message'])
 
+    def test_number_string_simple_message(self):
+        handler = fluent.handler.FluentHandler('app.follow', port=self._port)
+
+        logging.basicConfig(level=logging.INFO)
+        log = logging.getLogger('fluent.test')
+        handler.setFormatter(fluent.handler.FluentRecordFormatter())
+        log.addHandler(handler)
+        log.info("1")
+        handler.close()
+
+        data = self.get_data()
+        self.assertTrue('message' in data[0][2])
+
     def test_non_string_simple_message(self):
         handler = fluent.handler.FluentHandler('app.follow', port=self._port)
 
