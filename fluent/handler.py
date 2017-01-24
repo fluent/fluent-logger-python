@@ -88,7 +88,11 @@ class FluentRecordFormatter(logging.Formatter, object):
             self._add_dic(data, msg)
         elif isinstance(msg, basestring):
             try:
-                self._add_dic(data, json.loads(str(msg)))
+                json_msg = json.loads(str(msg))
+                if isinstance(json_msg, dict):
+                    self._add_dic(data, json_msg)
+                else:
+                    self._add_dic(data, {'message': str(json_msg)})
             except ValueError:
                 msg = record.getMessage()
                 self._add_dic(data, {'message': msg})
