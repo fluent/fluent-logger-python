@@ -265,6 +265,21 @@ Testing
 Testing can be done using
 `nose <https://nose.readthedocs.org/en/latest/>`__.
 
+Release
+-------
+
+Need wheel package.
+
+.. code:: sh
+
+    $ pip install wheel
+
+After that, type following command:
+
+.. code:: sh
+
+    $ python setup.py clean sdist bdist_wheel upload
+
 Contributors
 ------------
 
