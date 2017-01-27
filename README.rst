@@ -211,6 +211,18 @@ You can also customize formatter via logging.config.dictConfig
 
     logging.config.dictConfig(conf['logging'])
 
+You can inject your own custom proc to handle buffer overflow in the event of connection failure. This will mitigate the loss of data instead of simply throwing data away.
+
+.. code:: python
+
+    import msgpack
+    from io import BytesIO
+
+    def handler(pendings):
+        unpacker = msgpack.Unpacker(BytesIO(pendings))
+        for unpacked in unpacker:
+            print(unpacked)
+
 A sample configuration ``logging.yaml`` would be:
 
 .. code:: python
