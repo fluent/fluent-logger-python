@@ -178,3 +178,9 @@ class FluentSender(object):
         if self.socket:
             self.socket.close()
         self.socket = None
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, typ, value, traceback):
+        self.close()
