@@ -132,7 +132,7 @@ class FluentHandler(logging.Handler):
     def close(self):
         self.acquire()
         try:
-            self.sender._close()
+            self.sender.close()
             logging.Handler.close(self)
         finally:
             self.release()
