@@ -35,8 +35,8 @@ class Transport(object):
         self._conn.sendall(data)
 
 
-def get_connection_params(host, port=0):
-    parsed = urlparse(host)
+def get_connection_params(url, port=0):
+    parsed = urlparse(url)
 
     port = parsed.port or port or 0
 
@@ -58,8 +58,8 @@ def get_connection_params(host, port=0):
 
     else:
         raise TransportError(
-            "Unknown connection protocol: host={}, port={}".format(
-                host, port,
+            "Unknown connection protocol: url={}, port={}".format(
+                url, port,
             )
         )
 
