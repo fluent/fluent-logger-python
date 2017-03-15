@@ -5,7 +5,7 @@ import unittest
 import socket
 
 import fluent.sender
-from tests import mockserver
+from tests.mockserver import create_server
 
 
 class TestSetup(unittest.TestCase):
@@ -38,24 +38,27 @@ class TestSetup(unittest.TestCase):
         self.assertEqual(actual.timeout, 1.0)
 
 
-class TestSender(unittest.TestCase):
+class BaseTestSender(object):
+    ADDR = ""
+
     def setUp(self):
-        super(TestSender, self).setUp()
-        self._server = mockserver.MockRecvServer('localhost')
-        self._sender = fluent.sender.FluentSender(tag='test',
-                                                  port=self._server.port)
+        super(BaseTestSender, self).setUp()
+        self._server = create_server(self.ADDR)
+        self._sender = fluent.sender.FluentSender(
+            tag='test', host=self._server.addr(),
+        )
 
     def tearDown(self):
         self._sender.close()
+        self._server.close()
 
-    def get_data(self):
-        return self._server.get_recieved()
+    def get_messages(self, qty=1):
+        return self._server.recv(qty)
 
     def test_simple(self):
-        sender = self._sender
-        sender.emit('foo', {'bar': 'baz'})
-        sender._close()
-        data = self.get_data()
+        self._sender.emit('foo', {'bar': 'baz'})
+
+        data = self.get_messages(1)
         eq = self.assertEqual
         eq(1, len(data))
         eq(3, len(data[0]))
@@ -67,7 +70,7 @@ class TestSender(unittest.TestCase):
     def test_no_last_error_on_successful_emit(self):
         sender = self._sender
         sender.emit('foo', {'bar': 'baz'})
-        sender._close()
+        sender.transport.close()
 
         self.assertEqual(sender.last_error, None)
 
@@ -85,7 +88,6 @@ class TestSender(unittest.TestCase):
         self.assertEqual(self._sender.last_error, None)
 
     @unittest.skip("This test failed with 'TypeError: catching classes that do not inherit from BaseException is not allowed' so skipped")
-    #@patch('fluent.sender.socket')
     def test_connect_exception_during_sender_init(self, mock_socket):
         # Make the socket.socket().connect() call raise a custom exception
         mock_connect = mock_socket.socket.return_value.connect
@@ -93,3 +95,11 @@ class TestSender(unittest.TestCase):
         mock_connect.side_effect = socket.error(EXCEPTION_MSG)
 
         self.assertEqual(self._sender.last_error.args[0], EXCEPTION_MSG)
+
+
+class TestSender_TCP(BaseTestSender, unittest.TestCase):
+    ADDR = 'tcp://localhost'
+
+
+class TestSender_UDP(BaseTestSender, unittest.TestCase):
+    ADDR = 'udp://localhost'

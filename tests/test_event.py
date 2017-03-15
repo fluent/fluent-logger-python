@@ -3,19 +3,26 @@
 import unittest
 
 from fluent import event, sender
-from tests import mockserver
 
-class TestException(BaseException): pass
+from tests.mockserver import create_server
 
-class TestEvent(unittest.TestCase):
+
+class TestException(BaseException):
+    pass
+
+
+class BaseTestEvent(object):
+    ADDR = ""
+
     def setUp(self):
-        self._server = mockserver.MockRecvServer('localhost')
-        sender.setup('app', port=self._server.port)
+        self._server = create_server(self.ADDR)
+        sender.setup('app', host=self._server.addr())
 
     def tearDown(self):
         from fluent.sender import _set_global_sender
         sender.close()
         _set_global_sender(None)
+        self._server.close()
 
     def test_logging(self):
         # XXX: This tests succeeds even if the fluentd connection failed
@@ -45,7 +52,6 @@ class TestEvent(unittest.TestCase):
         sender.close()
 
     @unittest.skip("This test failed with 'TypeError: catching classes that do not inherit from BaseException is not allowed' so skipped")
-    #@patch('fluent.sender.socket')
     def test_connect_exception_during_event_send(self, mock_socket):
         # Make the socket.socket().connect() call raise a custom exception
         mock_connect = mock_socket.socket.return_value.connect
@@ -54,7 +60,7 @@ class TestEvent(unittest.TestCase):
 
         # Force the socket to reconnect while trying to emit the event
         global_sender = sender.get_global_sender()
-        global_sender._close()
+        global_sender.transport.close()
 
         event.Event('unfollow', {
             'from': 'userE',
@@ -64,3 +70,11 @@ class TestEvent(unittest.TestCase):
         ex = global_sender.last_error
         self.assertEqual(ex.args, EXCEPTION_MSG)
         global_sender.clear_last_error()
+
+
+class TestEvent_TCP(BaseTestEvent, unittest.TestCase):
+    ADDR = 'tcp://localhost'
+
+
+class TestEvent_UDP(BaseTestEvent, unittest.TestCase):
+    ADDR = 'udp://localhost'

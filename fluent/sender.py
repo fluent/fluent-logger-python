@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function
-import socket
 import threading
 import time
 import traceback
 
+import json
 import msgpack
+
+from fluent.transport import Transport, TransportError
 
 
 _global_sender = None
@@ -27,14 +29,17 @@ def setup(tag, **kwargs):
 def get_global_sender():
     return _global_sender
 
+
 def close():
     get_global_sender().close()
+
 
 class FluentSender(object):
     def __init__(self,
                  tag,
                  host='localhost',
                  port=24224,
+                 packager="msgpack",
                  bufmax=1 * 1024 * 1024,
                  timeout=3.0,
                  verbose=False,
@@ -48,17 +53,18 @@ class FluentSender(object):
         self.timeout = timeout
         self.verbose = verbose
         self.buffer_overflow_handler = buffer_overflow_handler
+        self.packager = self.get_packager(packager)
 
-        self.socket = None
         self.pendings = None
         self.lock = threading.Lock()
         self._last_error_threadlocal = threading.local()
 
+        self.transport = Transport(self.host, self.port, self.timeout)
         try:
-            self._reconnect()
-        except socket.error:
+            self.transport.connect()
+        except TransportError:
             # will be retried in emit()
-            self._close()
+            self.transport.close()
 
     def emit(self, label, data):
         cur_time = int(time.time())
@@ -80,15 +86,14 @@ class FluentSender(object):
         try:
             if self.pendings:
                 try:
-                    self._send_data(self.pendings)
+                    self.transport.send(self.pendings)
                 except Exception:
                     self._call_buffer_overflow_handler(self.pendings)
 
-            self._close()
+            self.transport.close()
             self.pendings = None
         finally:
             self.lock.release()
-
 
     def _make_packet(self, label, timestamp, data):
         if label:
@@ -98,7 +103,16 @@ class FluentSender(object):
         packet = (tag, timestamp, data)
         if self.verbose:
             print(packet)
-        return msgpack.packb(packet)
+        return self.packager(packet)
+
+    def get_packager(self, name):
+        if name == 'json':
+            return json.dumps
+
+        if name == 'msgpack':
+            return msgpack.packb
+
+        raise RuntimeError("Unknown packager: {}", name)
 
     def _send(self, bytes_):
         self.lock.acquire()
@@ -114,18 +128,17 @@ class FluentSender(object):
             bytes_ = self.pendings
 
         try:
-            self._send_data(bytes_)
+            self.transport.send(bytes_)
 
             # send finished
             self.pendings = None
 
             return True
-        except socket.error as e:
-        #except Exception as e:
+        except TransportError as e:
             self.last_error = e
 
-            # close socket
-            self._close()
+            # close transport
+            self.transport.close()
 
             # clear buffer if it exceeds max bufer size
             if self.pendings and (len(self.pendings) > self.bufmax):
@@ -135,24 +148,6 @@ class FluentSender(object):
                 self.pendings = bytes_
 
             return False
-
-    def _send_data(self, bytes_):
-        # reconnect if possible
-        self._reconnect()
-        # send message
-        self.socket.sendall(bytes_)
-
-    def _reconnect(self):
-        if not self.socket:
-            if self.host.startswith('unix://'):
-                sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-                sock.settimeout(self.timeout)
-                sock.connect(self.host[len('unix://'):])
-            else:
-                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                sock.settimeout(self.timeout)
-                sock.connect((self.host, self.port))
-            self.socket = sock
 
     def _call_buffer_overflow_handler(self, pending_events):
         try:
@@ -168,13 +163,8 @@ class FluentSender(object):
 
     @last_error.setter
     def last_error(self, err):
-        self._last_error_threadlocal.exception  =  err
+        self._last_error_threadlocal.exception = err
 
-    def clear_last_error(self, _thread_id = None):
+    def clear_last_error(self, _thread_id=None):
         if hasattr(self._last_error_threadlocal, 'exception'):
             delattr(self._last_error_threadlocal, 'exception')
-
-    def _close(self):
-        if self.socket:
-            self.socket.close()
-        self.socket = None
