@@ -5,6 +5,7 @@ import threading
 import time
 import traceback
 
+import json
 import msgpack
 
 from fluent.transport import Transport, TransportError
@@ -38,6 +39,7 @@ class FluentSender(object):
                  tag,
                  host='localhost',
                  port=24224,
+                 packager="msgpack",
                  bufmax=1 * 1024 * 1024,
                  timeout=3.0,
                  verbose=False,
@@ -51,6 +53,7 @@ class FluentSender(object):
         self.timeout = timeout
         self.verbose = verbose
         self.buffer_overflow_handler = buffer_overflow_handler
+        self.packager = self.get_packager(packager)
 
         self.pendings = None
         self.lock = threading.Lock()
@@ -100,7 +103,16 @@ class FluentSender(object):
         packet = (tag, timestamp, data)
         if self.verbose:
             print(packet)
-        return msgpack.packb(packet)
+        return self.packager(packet)
+
+    def get_packager(self, name):
+        if name == 'json':
+            return json.dumps
+
+        if name == 'msgpack':
+            return msgpack.packb
+
+        raise RuntimeError("Unknown packager: {}", name)
 
     def _send(self, bytes_):
         self.lock.acquire()

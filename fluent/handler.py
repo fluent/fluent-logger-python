@@ -115,12 +115,14 @@ class FluentHandler(logging.Handler):
                  host='localhost',
                  port=24224,
                  timeout=3.0,
+                 packager='msgpack',
                  verbose=False,
                  buffer_overflow_handler=None):
 
         self.tag = tag
         self.sender = sender.FluentSender(tag,
                                           host=host, port=port,
+                                          packager=packager,
                                           timeout=timeout, verbose=verbose,
                                           buffer_overflow_handler=buffer_overflow_handler)
         logging.Handler.__init__(self)
