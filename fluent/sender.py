@@ -48,6 +48,7 @@ class FluentSender(object):
                  timeout=3.0,
                  verbose=False,
                  buffer_overflow_handler=None,
+                 nanosecond_precision=False,
                  **kwargs):
 
         self.tag = tag
@@ -57,6 +58,7 @@ class FluentSender(object):
         self.timeout = timeout
         self.verbose = verbose
         self.buffer_overflow_handler = buffer_overflow_handler
+        self.nanosecond_precision = nanosecond_precision
 
         self.socket = None
         self.pendings = None
@@ -70,7 +72,10 @@ class FluentSender(object):
             self._close()
 
     def emit(self, label, data):
-        cur_time = int(time.time())
+        if self.nanosecond_precision:
+            cur_time = EventTime(time.time())
+        else:
+            cur_time = int(time.time())
         return self.emit_with_time(label, cur_time, data)
 
     def emit_with_time(self, label, timestamp, data):

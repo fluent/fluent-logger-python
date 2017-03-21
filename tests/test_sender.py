@@ -3,6 +3,7 @@
 from __future__ import print_function
 import unittest
 import socket
+import msgpack
 
 import fluent.sender
 from tests import mockserver
@@ -63,6 +64,20 @@ class TestSender(unittest.TestCase):
         eq({'bar': 'baz'}, data[0][2])
         self.assertTrue(data[0][1])
         self.assertTrue(isinstance(data[0][1], int))
+
+    def test_nanosecond(self):
+        sender = self._sender
+        sender.nanosecond_precision = True
+        sender.emit('foo', {'bar': 'baz'})
+        sender._close()
+        data = self.get_data()
+        eq = self.assertEqual
+        eq(1, len(data))
+        eq(3, len(data[0]))
+        eq('test.foo', data[0][0])
+        eq({'bar': 'baz'}, data[0][2])
+        self.assertTrue(isinstance(data[0][1], msgpack.ExtType))
+        eq(data[0][1].code, 0)
 
     def test_no_last_error_on_successful_emit(self):
         sender = self._sender
