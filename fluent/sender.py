@@ -83,6 +83,8 @@ class FluentSender(object):
         return self.emit_with_time(label, cur_time, data)
 
     def emit_with_time(self, label, timestamp, data):
+        if self.nanosecond_precision and isinstance(timestamp, float):
+            timestamp = EventTime(timestamp)
         try:
             bytes_ = self._make_packet(label, timestamp, data)
         except Exception as e:

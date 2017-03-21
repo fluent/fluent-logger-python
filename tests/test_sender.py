@@ -79,6 +79,22 @@ class TestSender(unittest.TestCase):
         self.assertTrue(isinstance(data[0][1], msgpack.ExtType))
         eq(data[0][1].code, 0)
 
+    def test_nanosecond_coerce_float(self):
+        time = 1490061367.8616468906402588
+        sender = self._sender
+        sender.nanosecond_precision = True
+        sender.emit_with_time('foo', time, {'bar': 'baz'})
+        sender._close()
+        data = self.get_data()
+        eq = self.assertEqual
+        eq(1, len(data))
+        eq(3, len(data[0]))
+        eq('test.foo', data[0][0])
+        eq({'bar': 'baz'}, data[0][2])
+        self.assertTrue(isinstance(data[0][1], msgpack.ExtType))
+        eq(data[0][1].code, 0)
+        eq(data[0][1].data, b'X\xd0\x8873[\xb0*')
+
     def test_no_last_error_on_successful_emit(self):
         sender = self._sender
         sender.emit('foo', {'bar': 'baz'})
