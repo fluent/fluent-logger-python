@@ -36,7 +36,11 @@ class EventTime(msgpack.ExtType):
     def __new__(cls, timestamp):
         seconds = int(timestamp)
         nanoseconds = int(timestamp % 1 * 10 ** 9)
-        return super(EventTime, cls).__new__(cls, code=0, data=struct.pack(">II", seconds, nanoseconds))
+        return super(EventTime, cls).__new__(
+            cls,
+            code=0,
+            data=struct.pack(">II", seconds, nanoseconds),
+        )
 
 
 class FluentSender(object):
