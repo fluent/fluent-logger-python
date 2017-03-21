@@ -70,7 +70,7 @@ class FluentSender(object):
             self._close()
 
     def emit(self, label, data):
-        cur_time = EventTime(time.time())
+        cur_time = int(time.time())
         return self.emit_with_time(label, cur_time, data)
 
     def emit_with_time(self, label, timestamp, data):

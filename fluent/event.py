@@ -10,6 +10,4 @@ class Event(object):
         assert isinstance(data, dict), 'data must be a dict'
         sender_ = kwargs.get('sender', sender.get_global_sender())
         timestamp = kwargs.get('time', int(time.time()))
-        if isinstance(timestamp, float):
-            timestamp = sender.EventTime(timestamp)
         sender_.emit_with_time(label, timestamp, data)
