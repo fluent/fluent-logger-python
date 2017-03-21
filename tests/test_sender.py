@@ -93,3 +93,10 @@ class TestSender(unittest.TestCase):
         mock_connect.side_effect = socket.error(EXCEPTION_MSG)
 
         self.assertEqual(self._sender.last_error.args[0], EXCEPTION_MSG)
+
+
+class TestEventTime(unittest.TestCase):
+    def test_event_time(self):
+        time = fluent.sender.EventTime(1490061367.8616468906402588)
+        self.assertEqual(time.code, 0)
+        self.assertEqual(time.data, b'X\xd0\x8873[\xb0*')
