@@ -110,7 +110,7 @@ Event-Based Interface
 This API is a wrapper for `sender.FluentSender`.
 
 First, you need to call ``sender.setup()`` to create global `sender.FluentSender` logger
-instance. This call needs to be called only once, at the beggining of
+instance. This call needs to be called only once, at the beginning of
 the application for example.
 
 Initialization code of Event-Based API is below:
@@ -188,7 +188,7 @@ module.
 
     logging.basicConfig(level=logging.INFO)
     l = logging.getLogger('fluent.test')
-    h = handler.FluentHandler('app.follow', host='host', port=24224)
+    h = handler.FluentHandler('app.follow', host='host', port=24224, buffer_overflow_handler=handler)
     formatter = handler.FluentRecordFormatter(custom_format)
     h.setFormatter(formatter)
     l.addHandler(h)
@@ -210,6 +210,18 @@ You can also customize formatter via logging.config.dictConfig
         conf = yaml.load(fd)
 
     logging.config.dictConfig(conf['logging'])
+
+You can inject your own custom proc to handle buffer overflow in the event of connection failure. This will mitigate the loss of data instead of simply throwing data away.
+
+.. code:: python
+
+    import msgpack
+    from io import BytesIO
+
+    def handler(pendings):
+        unpacker = msgpack.Unpacker(BytesIO(pendings))
+        for unpacked in unpacker:
+            print(unpacked)
 
 A sample configuration ``logging.yaml`` would be:
 
@@ -242,17 +254,18 @@ A sample configuration ``logging.yaml`` would be:
                 host: localhost
                 port: 24224
                 tag: test.logging
+                buffer_overflow_handler: handler
                 formatter: fluent_fmt
                 level: DEBUG
-            null:
+            none:
                 class: logging.NullHandler
 
         loggers:
             amqp:
-                handlers: [null]
+                handlers: [none]
                 propagate: False
             conf:
-                handlers: [null]
+                handlers: [none]
                 propagate: False
             '': # root logger
                 handlers: [console, fluent]
@@ -264,6 +277,21 @@ Testing
 
 Testing can be done using
 `nose <https://nose.readthedocs.org/en/latest/>`__.
+
+Release
+-------
+
+Need wheel package.
+
+.. code:: sh
+
+    $ pip install wheel
+
+After that, type following command:
+
+.. code:: sh
+
+    $ python setup.py clean sdist bdist_wheel upload
 
 Contributors
 ------------

@@ -62,6 +62,48 @@ class TestHandler(unittest.TestCase):
         self.assertTrue('lineno' in data[0][2])
         self.assertTrue('emitted_at' in data[0][2])
 
+    def test_custom_field_raise_exception(self):
+        handler = fluent.handler.FluentHandler('app.follow', port=self._port)
+
+        logging.basicConfig(level=logging.INFO)
+        log = logging.getLogger('fluent.test')
+        handler.setFormatter(
+            fluent.handler.FluentRecordFormatter(fmt={
+                'name': '%(name)s',
+                'custom_field': '%(custom_field)s'
+            })
+        )
+        log.addHandler(handler)
+        with self.assertRaises(KeyError):
+            log.info({'sample': 'value'})
+        log.removeHandler(handler)
+        handler.close()
+
+    def test_custom_field_fill_missing_fmt_key_is_true(self):
+        handler = fluent.handler.FluentHandler('app.follow', port=self._port)
+
+        logging.basicConfig(level=logging.INFO)
+        log = logging.getLogger('fluent.test')
+        handler.setFormatter(
+            fluent.handler.FluentRecordFormatter(fmt={
+                'name': '%(name)s',
+                'custom_field': '%(custom_field)s'
+                },
+                fill_missing_fmt_key=True
+            )
+        )
+        log.addHandler(handler)
+        log.info({'sample': 'value'})
+        log.removeHandler(handler)
+        handler.close()
+
+        data = self.get_data()
+        self.assertTrue('name' in data[0][2])
+        self.assertEqual('fluent.test', data[0][2]['name'])
+        self.assertTrue('custom_field' in data[0][2])
+        # field defaults to none if not in log record
+        self.assertIsNone(data[0][2]['custom_field'])
+
     def test_json_encoded_message(self):
         handler = fluent.handler.FluentHandler('app.follow', port=self._port)
 
@@ -103,6 +145,19 @@ class TestHandler(unittest.TestCase):
         data = self.get_data()
         self.assertTrue('message' in data[0][2])
         self.assertEqual('hello world, you!', data[0][2]['message'])
+
+    def test_number_string_simple_message(self):
+        handler = fluent.handler.FluentHandler('app.follow', port=self._port)
+
+        logging.basicConfig(level=logging.INFO)
+        log = logging.getLogger('fluent.test')
+        handler.setFormatter(fluent.handler.FluentRecordFormatter())
+        log.addHandler(handler)
+        log.info("1")
+        handler.close()
+
+        data = self.get_data()
+        self.assertTrue('message' in data[0][2])
 
     def test_non_string_simple_message(self):
         handler = fluent.handler.FluentHandler('app.follow', port=self._port)

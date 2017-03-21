@@ -23,8 +23,12 @@ class FluentRecordFormatter(logging.Formatter, object):
     Best used with server storing data in an ElasticSearch cluster for example.
 
     :param fmt: a dict with format string as values to map to provided keys.
+    :param datefmt: strftime()-compatible date/time format string.
+    :param style: (NOT USED)
+    :param fill_missing_fmt_key: if True, do not raise a KeyError if the format
+        key is not found. Put None if not found.s
     """
-    def __init__(self, fmt=None, datefmt=None):
+    def __init__(self, fmt=None, datefmt=None, style='%', fill_missing_fmt_key=False):
         super(FluentRecordFormatter, self).__init__(None, datefmt)
 
         if not fmt:
@@ -38,6 +42,8 @@ class FluentRecordFormatter(logging.Formatter, object):
 
         self.hostname = socket.gethostname()
 
+        self.fill_missing_fmt_key = fill_missing_fmt_key
+
     def format(self, record):
         # Only needed for python2.6
         if sys.version_info[0:2] <= (2, 6) and self.usesTime():
@@ -47,9 +53,18 @@ class FluentRecordFormatter(logging.Formatter, object):
         super(FluentRecordFormatter, self).format(record)
         # Add ours
         record.hostname = self.hostname
+
         # Apply format
-        data = dict([(key, value % record.__dict__)
-                     for key, value in self._fmt_dict.items()])
+        data = {}
+        for key, value in self._fmt_dict.items():
+            try:
+                value = value % record.__dict__
+            except KeyError as exc:
+                value = None
+                if not self.fill_missing_fmt_key:
+                    raise exc
+
+            data[key] = value
 
         self._structuring(data, record)
         return data
@@ -73,7 +88,11 @@ class FluentRecordFormatter(logging.Formatter, object):
             self._add_dic(data, msg)
         elif isinstance(msg, basestring):
             try:
-                self._add_dic(data, json.loads(str(msg)))
+                json_msg = json.loads(str(msg))
+                if isinstance(json_msg, dict):
+                    self._add_dic(data, json_msg)
+                else:
+                    self._add_dic(data, {'message': str(json_msg)})
             except ValueError:
                 msg = record.getMessage()
                 self._add_dic(data, {'message': msg})
@@ -96,12 +115,14 @@ class FluentHandler(logging.Handler):
                  host='localhost',
                  port=24224,
                  timeout=3.0,
-                 verbose=False):
+                 verbose=False,
+                 buffer_overflow_handler=None):
 
         self.tag = tag
         self.sender = sender.FluentSender(tag,
                                           host=host, port=port,
-                                          timeout=timeout, verbose=verbose)
+                                          timeout=timeout, verbose=verbose,
+                                          buffer_overflow_handler=buffer_overflow_handler)
         logging.Handler.__init__(self)
 
     def emit(self, record):
