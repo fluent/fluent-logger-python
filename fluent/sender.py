@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function
+import struct
 import socket
 import threading
 import time
@@ -30,6 +31,18 @@ def get_global_sender():
 def close():
     get_global_sender().close()
 
+
+class EventTime(msgpack.ExtType):
+    def __new__(cls, timestamp):
+        seconds = int(timestamp)
+        nanoseconds = int(timestamp % 1 * 10 ** 9)
+        return super(EventTime, cls).__new__(
+            cls,
+            code=0,
+            data=struct.pack(">II", seconds, nanoseconds),
+        )
+
+
 class FluentSender(object):
     def __init__(self,
                  tag,
@@ -39,6 +52,7 @@ class FluentSender(object):
                  timeout=3.0,
                  verbose=False,
                  buffer_overflow_handler=None,
+                 nanosecond_precision=False,
                  **kwargs):
 
         self.tag = tag
@@ -48,6 +62,7 @@ class FluentSender(object):
         self.timeout = timeout
         self.verbose = verbose
         self.buffer_overflow_handler = buffer_overflow_handler
+        self.nanosecond_precision = nanosecond_precision
 
         self.socket = None
         self.pendings = None
@@ -61,10 +76,15 @@ class FluentSender(object):
             self._close()
 
     def emit(self, label, data):
-        cur_time = int(time.time())
+        if self.nanosecond_precision:
+            cur_time = EventTime(time.time())
+        else:
+            cur_time = int(time.time())
         return self.emit_with_time(label, cur_time, data)
 
     def emit_with_time(self, label, timestamp, data):
+        if self.nanosecond_precision and isinstance(timestamp, float):
+            timestamp = EventTime(timestamp)
         try:
             bytes_ = self._make_packet(label, timestamp, data)
         except Exception as e:
