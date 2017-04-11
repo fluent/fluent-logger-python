@@ -90,6 +90,16 @@ fluentd, with tag 'app.follow' and the attributes 'from' and 'to'.
     cur_time = int(time.time())
     logger.emit_with_time('follow', cur_time, {'from': 'userA', 'to':'userB'})
 
+To send events with nanosecond-precision timestamps (Fluent 0.14 and up),
+specify `nanosecond_precision` on `FluentSender`.
+
+.. code:: python
+
+    # Use nanosecond
+    logger = sender.FluentSender('app', nanosecond_precision=True)
+    logger.emit('follow', {'from': 'userA', 'to': 'userB'})
+    logger.emit_with_time('follow', time.time(), {'from': 'userA', 'to': 'userB'})
+
 You can detect an error via return value of `emit`. If an error happens in `emit`, `emit` returns `False` and get an error object using `last_error` method.
 
 .. code:: python
