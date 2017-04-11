@@ -65,6 +65,18 @@ class TestSender(unittest.TestCase):
         self.assertTrue(data[0][1])
         self.assertTrue(isinstance(data[0][1], int))
 
+    def test_decorator_simple(self):
+        with self._sender as sender:
+            sender.emit('foo', {'bar': 'baz'})
+        data = self.get_data()
+        eq = self.assertEqual
+        eq(1, len(data))
+        eq(3, len(data[0]))
+        eq('test.foo', data[0][0])
+        eq({'bar': 'baz'}, data[0][2])
+        self.assertTrue(data[0][1])
+        self.assertTrue(isinstance(data[0][1], int))
+
     def test_nanosecond(self):
         sender = self._sender
         sender.nanosecond_precision = True
