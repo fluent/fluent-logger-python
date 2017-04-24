@@ -24,19 +24,36 @@ class FluentRecordFormatter(logging.Formatter, object):
 
     :param fmt: a dict with format string as values to map to provided keys.
     :param datefmt: strftime()-compatible date/time format string.
-    :param style: (NOT USED)
+    :param style: '%', '{' or '$' (used only with Python 3.2 or above)
     :param fill_missing_fmt_key: if True, do not raise a KeyError if the format
         key is not found. Put None if not found.s
     """
     def __init__(self, fmt=None, datefmt=None, style='%', fill_missing_fmt_key=False):
         super(FluentRecordFormatter, self).__init__(None, datefmt)
 
-        if not fmt:
-            self._fmt_dict = {
+        if sys.version_info[0:2] >= (3, 2) and style != '%':
+            self.__style, basic_fmt_dict = {
+                '{': (logging.StrFormatStyle, {
+                    'sys_host': '{hostname}',
+                    'sys_name': '{name}',
+                    'sys_module': '{module}',
+                }),
+                '$': (logging.StringTemplateStyle, {
+                    'sys_host': '${hostname}',
+                    'sys_name': '${name}',
+                    'sys_module': '${module}',
+                }),
+            }[style]
+        else:
+            self.__style = None
+            basic_fmt_dict = {
                 'sys_host': '%(hostname)s',
                 'sys_name': '%(name)s',
                 'sys_module': '%(module)s',
             }
+
+        if not fmt:
+            self._fmt_dict = basic_fmt_dict
         else:
             self._fmt_dict = fmt
 
@@ -58,7 +75,10 @@ class FluentRecordFormatter(logging.Formatter, object):
         data = {}
         for key, value in self._fmt_dict.items():
             try:
-                value = value % record.__dict__
+                if self.__style:
+                    value = self.__style(value).format(record)
+                else:
+                    value = value % record.__dict__
             except KeyError as exc:
                 value = None
                 if not self.fill_missing_fmt_key:
