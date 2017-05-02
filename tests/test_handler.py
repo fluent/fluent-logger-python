@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import logging
+import sys
 import unittest
 
 import fluent.handler
@@ -51,6 +52,52 @@ class TestHandler(unittest.TestCase):
                 'lineno': '%(lineno)d',
                 'emitted_at': '%(asctime)s',
             })
+        )
+        log.addHandler(handler)
+        log.info({'sample': 'value'})
+        handler.close()
+
+        data = self.get_data()
+        self.assertTrue('name' in data[0][2])
+        self.assertEqual('fluent.test', data[0][2]['name'])
+        self.assertTrue('lineno' in data[0][2])
+        self.assertTrue('emitted_at' in data[0][2])
+
+    @unittest.skipUnless(sys.version_info[0:2] >= (3, 2), 'supported with Python 3.2 or above')
+    def test_custom_fmt_with_format_style(self):
+        handler = fluent.handler.FluentHandler('app.follow', port=self._port)
+
+        logging.basicConfig(level=logging.INFO)
+        log = logging.getLogger('fluent.test')
+        handler.setFormatter(
+            fluent.handler.FluentRecordFormatter(fmt={
+                'name': '{name}',
+                'lineno': '{lineno}',
+                'emitted_at': '{asctime}',
+            }, style='{')
+        )
+        log.addHandler(handler)
+        log.info({'sample': 'value'})
+        handler.close()
+
+        data = self.get_data()
+        self.assertTrue('name' in data[0][2])
+        self.assertEqual('fluent.test', data[0][2]['name'])
+        self.assertTrue('lineno' in data[0][2])
+        self.assertTrue('emitted_at' in data[0][2])
+
+    @unittest.skipUnless(sys.version_info[0:2] >= (3, 2), 'supported with Python 3.2 or above')
+    def test_custom_fmt_with_template_style(self):
+        handler = fluent.handler.FluentHandler('app.follow', port=self._port)
+
+        logging.basicConfig(level=logging.INFO)
+        log = logging.getLogger('fluent.test')
+        handler.setFormatter(
+            fluent.handler.FluentRecordFormatter(fmt={
+                'name': '${name}',
+                'lineno': '${lineno}',
+                'emitted_at': '${asctime}',
+            }, style='$')
         )
         log.addHandler(handler)
         log.info({'sample': 'value'})
