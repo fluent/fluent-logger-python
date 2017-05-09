@@ -167,12 +167,12 @@ You can inject your own custom proc to handle buffer overflow in the event of co
     import msgpack
     from io import BytesIO
 
-    def handler(pendings):
+    def overflow_handler(pendings):
         unpacker = msgpack.Unpacker(BytesIO(pendings))
         for unpacked in unpacker:
             print(unpacked)
 
-    logger = sender.FluentSender('app', host='host', port=24224, buffer_overflow_handler=handler)
+    logger = sender.FluentSender('app', host='host', port=24224, buffer_overflow_handler=overflow_handler)
 
 You should handle any exception in handler. fluent-logger ignores exceptions from ``buffer_overflow_handler``.
 
@@ -198,7 +198,7 @@ module.
 
     logging.basicConfig(level=logging.INFO)
     l = logging.getLogger('fluent.test')
-    h = handler.FluentHandler('app.follow', host='host', port=24224, buffer_overflow_handler=handler)
+    h = handler.FluentHandler('app.follow', host='host', port=24224, buffer_overflow_handler=overflow_handler)
     formatter = handler.FluentRecordFormatter(custom_format)
     h.setFormatter(formatter)
     l.addHandler(h)
@@ -228,7 +228,7 @@ You can inject your own custom proc to handle buffer overflow in the event of co
     import msgpack
     from io import BytesIO
 
-    def handler(pendings):
+    def overflow_handler(pendings):
         unpacker = msgpack.Unpacker(BytesIO(pendings))
         for unpacked in unpacker:
             print(unpacked)
@@ -264,7 +264,7 @@ A sample configuration ``logging.yaml`` would be:
                 host: localhost
                 port: 24224
                 tag: test.logging
-                buffer_overflow_handler: handler
+                buffer_overflow_handler: overflow_handler
                 formatter: fluent_fmt
                 level: DEBUG
             none:
