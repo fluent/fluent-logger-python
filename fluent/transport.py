@@ -32,7 +32,7 @@ class Transport(object):
 
     def send(self, data):
         self.connect()
-        self._conn.sendall(data)
+        self._conn.sendall(data.encode('utf-8'))
 
 
 def get_connection_params(url, port=0):
