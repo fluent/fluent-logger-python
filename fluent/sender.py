@@ -53,6 +53,7 @@ class FluentSender(object):
                  verbose=False,
                  buffer_overflow_handler=None,
                  nanosecond_precision=False,
+                 msgpack_kwargs=None,
                  **kwargs): # This kwargs argument is not used in __init__. This will be removed in the next major version.
 
         self.tag = tag
@@ -63,6 +64,7 @@ class FluentSender(object):
         self.verbose = verbose
         self.buffer_overflow_handler = buffer_overflow_handler
         self.nanosecond_precision = nanosecond_precision
+        self.msgpack_kwargs = {} if msgpack_kwargs is None else msgpack_kwargs
 
         self.socket = None
         self.pendings = None
@@ -109,7 +111,6 @@ class FluentSender(object):
         finally:
             self.lock.release()
 
-
     def _make_packet(self, label, timestamp, data):
         if label:
             tag = '.'.join((self.tag, label))
@@ -118,7 +119,7 @@ class FluentSender(object):
         packet = (tag, timestamp, data)
         if self.verbose:
             print(packet)
-        return msgpack.packb(packet)
+        return msgpack.packb(packet, **self.msgpack_kwargs)
 
     def _send(self, bytes_):
         self.lock.acquire()
