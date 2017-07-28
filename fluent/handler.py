@@ -136,13 +136,15 @@ class FluentHandler(logging.Handler):
                  port=24224,
                  timeout=3.0,
                  verbose=False,
-                 buffer_overflow_handler=None):
+                 buffer_overflow_handler=None,
+                 nanosecond_precision=False):
 
         self.tag = tag
         self.sender = sender.FluentSender(tag,
                                           host=host, port=port,
                                           timeout=timeout, verbose=verbose,
-                                          buffer_overflow_handler=buffer_overflow_handler)
+                                          buffer_overflow_handler=buffer_overflow_handler,
+                                          nanosecond_precision=nanosecond_precision)
         logging.Handler.__init__(self)
 
     def emit(self, record):
