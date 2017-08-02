@@ -53,7 +53,7 @@ class FluentSender(object):
                  verbose=False,
                  buffer_overflow_handler=None,
                  nanosecond_precision=False,
-                 **kwargs):
+                 **kwargs): # This kwargs argument is not used in __init__. This will be removed in the next major version.
 
         self.tag = tag
         self.host = host
