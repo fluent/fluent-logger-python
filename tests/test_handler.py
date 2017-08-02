@@ -109,6 +109,29 @@ class TestHandler(unittest.TestCase):
         self.assertTrue('lineno' in data[0][2])
         self.assertTrue('emitted_at' in data[0][2])
 
+    def test_custom_fmt_with_key_style(self):
+        handler = fluent.handler.FluentHandler('app.follow', port=self._port)
+
+        logging.basicConfig(level=logging.INFO)
+        log = logging.getLogger('fluent.test')
+        handler.setFormatter(
+            fluent.handler.FluentRecordFormatter(fmt={
+                'name': 'name',
+                'lineno': 'lineno',
+                'emitted_at': 'asctime',
+            }, style='key')
+        )
+        log.addHandler(handler)
+        log.info({'sample': 'value'})
+        handler.close()
+
+        data = self.get_data()
+        self.assertTrue('name' in data[0][2])
+        self.assertEqual('fluent.test', data[0][2]['name'])
+        self.assertTrue('lineno' in data[0][2])
+        self.assertIsInstance(data[0][2]['lineno'], int)
+        self.assertTrue('emitted_at' in data[0][2])
+
     def test_custom_field_raise_exception(self):
         handler = fluent.handler.FluentHandler('app.follow', port=self._port)
 

@@ -24,14 +24,23 @@ class FluentRecordFormatter(logging.Formatter, object):
 
     :param fmt: a dict with format string as values to map to provided keys.
     :param datefmt: strftime()-compatible date/time format string.
-    :param style: '%', '{' or '$' (used only with Python 3.2 or above)
+    :param style: '%', '{', '$' or 'key'
+        '{' and '$' can be used only with Python 3.2 or above
+        'key' means that values of fmt are used as a key of record.__dict__
     :param fill_missing_fmt_key: if True, do not raise a KeyError if the format
         key is not found. Put None if not found.s
     """
     def __init__(self, fmt=None, datefmt=None, style='%', fill_missing_fmt_key=False):
         super(FluentRecordFormatter, self).__init__(None, datefmt)
 
-        if sys.version_info[0:2] >= (3, 2) and style != '%':
+        if style == 'key':
+            self.__style = style
+            basic_fmt_dict = {
+                'sys_host': 'hostname',
+                'sys_name': 'name',
+                'sys_module': 'module',
+            }
+        elif sys.version_info[0:2] >= (3, 2) and style != '%':
             self.__style, basic_fmt_dict = {
                 '{': (logging.StrFormatStyle, {
                     'sys_host': '{hostname}',
@@ -75,7 +84,9 @@ class FluentRecordFormatter(logging.Formatter, object):
         data = {}
         for key, value in self._fmt_dict.items():
             try:
-                if self.__style:
+                if self.__style == 'key':
+                    value = record.__dict__[value]
+                elif self.__style:
                     value = self.__style(value).format(record)
                 else:
                     value = value % record.__dict__
