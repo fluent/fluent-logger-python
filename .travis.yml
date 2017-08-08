@@ -18,3 +18,7 @@ script:
     - "PYTHONFAULTHANDLER=x timeout -sABRT 30s nosetests -vsd"
 after_success:
     - coveralls
+
+matrix:
+  allow_failures:
+    - python: nightly
