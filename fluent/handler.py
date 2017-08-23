@@ -122,8 +122,7 @@ class FluentRecordFormatter(logging.Formatter, object):
     @staticmethod
     def _add_dic(data, dic):
         for key, value in dic.items():
-            if isinstance(key, basestring):
-                data[str(key)] = value
+            data[str(key)] = value.__str__()
 
 
 class FluentHandler(logging.Handler):
