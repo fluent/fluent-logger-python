@@ -137,6 +137,7 @@ class FluentHandler(logging.Handler):
                  timeout=3.0,
                  verbose=False,
                  buffer_overflow_handler=None,
+                 msgpack_kwargs=None,
                  nanosecond_precision=False):
 
         self.tag = tag
@@ -144,6 +145,7 @@ class FluentHandler(logging.Handler):
                                           host=host, port=port,
                                           timeout=timeout, verbose=verbose,
                                           buffer_overflow_handler=buffer_overflow_handler,
+                                          msgpack_kwargs=msgpack_kwargs,
                                           nanosecond_precision=nanosecond_precision)
         logging.Handler.__init__(self)
 
