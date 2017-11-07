@@ -197,6 +197,7 @@ class FluentSender(object):
 
     def _close(self):
         if self.socket:
+            self.socket.shutdown(socket.SHUT_RDWR)
             self.socket.close()
         self.socket = None
 
