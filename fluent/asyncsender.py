@@ -13,6 +13,8 @@ from fluent.sender import EventTime
 
 _global_sender = None
 
+DEFAULT_QUEUE_TIMEOUT = 0.05
+
 
 def _set_global_sender(sender):
     """ [For testing] Function to set global sender directly
@@ -29,6 +31,7 @@ def setup(tag, **kwargs):
 def get_global_sender():
     return _global_sender
 
+
 def close():
     get_global_sender().close()
 
@@ -42,10 +45,12 @@ class CommunicatorThread(threading.Thread):
                  verbose=False,
                  buffer_overflow_handler=None,
                  nanosecond_precision=False,
-                 msgpack_kwargs=None, *args, **kwargs):
+                 msgpack_kwargs=None,
+                 queue_timeout=DEFAULT_QUEUE_TIMEOUT, *args, **kwargs):
         super(CommunicatorThread, self).__init__(**kwargs)
         self._queue = Queue()
         self._do_run = True
+        self._queue_timeout = queue_timeout
         self._conn_close_lock = threading.Lock()
         self._sender = sender.FluentSender(tag=tag, host=host, port=port, bufmax=bufmax, timeout=timeout,
                                            verbose=verbose, buffer_overflow_handler=buffer_overflow_handler,
@@ -61,7 +66,7 @@ class CommunicatorThread(threading.Thread):
     def run(self):
         while self._do_run:
             try:
-                bytes_ = self._queue.get(block=False)
+                bytes_ = self._queue.get(block=True, timeout=self._queue_timeout)
             except Empty:
                 continue
             self._conn_close_lock.acquire()
@@ -101,6 +106,14 @@ class CommunicatorThread(threading.Thread):
     def clear_last_error(self, _thread_id = None):
         self._sender.clear_last_error(_thread_id=_thread_id)
 
+    @property
+    def queue_timeout(self):
+        return self._queue_timeout
+
+    @queue_timeout.setter
+    def queue_timeout(self, value):
+        self._queue_timeout = value
+
     def __enter__(self):
         return self
 
@@ -119,6 +132,7 @@ class FluentSender(sender.FluentSender):
                  buffer_overflow_handler=None,
                  nanosecond_precision=False,
                  msgpack_kwargs=None,
+                 queue_timeout=DEFAULT_QUEUE_TIMEOUT,
                  **kwargs): # This kwargs argument is not used in __init__. This will be removed in the next major version.
         super(FluentSender, self).__init__(tag=tag, host=host, port=port, bufmax=bufmax, timeout=timeout,
                                            verbose=verbose, buffer_overflow_handler=buffer_overflow_handler,
@@ -126,7 +140,8 @@ class FluentSender(sender.FluentSender):
                                            **kwargs)
         self._communicator = CommunicatorThread(tag=tag, host=host, port=port, bufmax=bufmax, timeout=timeout,
                                                 verbose=verbose, buffer_overflow_handler=buffer_overflow_handler,
-                                                nanosecond_precision=nanosecond_precision, msgpack_kwargs=msgpack_kwargs)
+                                                nanosecond_precision=nanosecond_precision, msgpack_kwargs=msgpack_kwargs,
+                                                queue_timeout=queue_timeout)
         self._communicator.start()
 
     def _send(self, bytes_):
@@ -162,6 +177,14 @@ class FluentSender(sender.FluentSender):
 
     def clear_last_error(self, _thread_id = None):
         self._communicator.clear_last_error(_thread_id=_thread_id)
+
+    @property
+    def queue_timeout(self):
+        return self._communicator.queue_timeout
+
+    @queue_timeout.setter
+    def queue_timeout(self, value):
+        self._communicator.queue_timeout = value
 
     def __enter__(self):
         return self

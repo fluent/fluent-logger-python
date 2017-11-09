@@ -145,6 +145,51 @@ class TestSender(unittest.TestCase):
         self.assertEqual(self._sender.last_error.args[0], EXCEPTION_MSG)
 
 
+class TestSenderWithTimeout(unittest.TestCase):
+    def setUp(self):
+        super(TestSenderWithTimeout, self).setUp()
+        self._server = mockserver.MockRecvServer('localhost')
+        self._sender = fluent.asyncsender.FluentSender(tag='test',
+                                                       port=self._server.port,
+                                                       queue_timeout=0.04)
+
+    def tearDown(self):
+        self._sender.close()
+
+    def get_data(self):
+        return self._server.get_recieved()
+
+    def test_simple(self):
+        sender = self._sender
+        sender.emit('foo', {'bar': 'baz'})
+        time.sleep(0.5)
+        sender._close()
+        data = self.get_data()
+        eq = self.assertEqual
+        eq(1, len(data))
+        eq(3, len(data[0]))
+        eq('test.foo', data[0][0])
+        eq({'bar': 'baz'}, data[0][2])
+        self.assertTrue(data[0][1])
+        self.assertTrue(isinstance(data[0][1], int))
+
+    def test_simple_with_timeout_props(self):
+        sender = self._sender
+        sender.queue_timeout = 0.06
+        assert sender.queue_timeout == 0.06
+        sender.emit('foo', {'bar': 'baz'})
+        time.sleep(0.5)
+        sender._close()
+        data = self.get_data()
+        eq = self.assertEqual
+        eq(1, len(data))
+        eq(3, len(data[0]))
+        eq('test.foo', data[0][0])
+        eq({'bar': 'baz'}, data[0][2])
+        self.assertTrue(data[0][1])
+        self.assertTrue(isinstance(data[0][1], int))
+
+
 class TestEventTime(unittest.TestCase):
     def test_event_time(self):
         time = fluent.asyncsender.EventTime(1490061367.8616468906402588)
