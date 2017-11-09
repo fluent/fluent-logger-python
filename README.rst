@@ -282,6 +282,72 @@ A sample configuration ``logging.yaml`` would be:
                 level: DEBUG
                 propagate: False
 
+Asynchronous Communication
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Besides the regular interfaces - the event-based one provided by ``sender.FluentSender`` and the python logging one
+provided by ``handler.FluentHandler`` - there are also corresponding asynchronous versions in ``asyncsender`` and
+``asynchandler`` respectively. These versions use a separate thread to handle the communication with the remote fluentd
+server. In this way the client of the library won't be blocked during the logging of the events, and won't risk going
+into timeout if the fluentd server becomes unreachable. Also it won't be slowed down by the network overhead.
+
+The interfaces in ``asyncsender`` and ``asynchandler`` are exactly the same as those in ``sender`` and ``handler``, so it's
+just a matter of importing from a different module.
+
+For instance, for the event-based interface:
+
+.. code:: python
+
+    from fluent import asyncsender as sender
+
+    # for local fluent
+    sender.setup('app')
+
+    # for remote fluent
+    sender.setup('app', host='host', port=24224)
+
+    # do your work
+    ...
+
+    # IMPORTANT: before program termination, close the sender
+    sender.close()
+
+or for the python logging interface:
+
+.. code:: python
+
+    import logging
+    from fluent import asynchandler as handler
+
+    custom_format = {
+      'host': '%(hostname)s',
+      'where': '%(module)s.%(funcName)s',
+      'type': '%(levelname)s',
+      'stack_trace': '%(exc_text)s'
+    }
+
+    logging.basicConfig(level=logging.INFO)
+    l = logging.getLogger('fluent.test')
+    h = handler.FluentHandler('app.follow', host='host', port=24224, buffer_overflow_handler=overflow_handler)
+    formatter = handler.FluentRecordFormatter(custom_format)
+    h.setFormatter(formatter)
+    l.addHandler(h)
+    l.info({
+      'from': 'userA',
+      'to': 'userB'
+    })
+    l.info('{"from": "userC", "to": "userD"}')
+    l.info("This log entry will be logged with the additional key: 'message'.")
+
+    ...
+
+    # IMPORTANT: before program termination, close the handler
+    h.close()
+
+**NOTE**: please note that it's important to close the sender or the handler at program termination. This will make
+sure the communication thread terminates and it's joined correctly. Otherwise the program won't exit, waiting for
+the thread, unless forcibly killed.
+
 Testing
 -------
 
