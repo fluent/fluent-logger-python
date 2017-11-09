@@ -2,6 +2,7 @@
 
 from fluent import asyncsender
 from fluent import handler
+from fluent.handler import FluentRecordFormatter
 
 
 class FluentHandler(handler.FluentHandler):
