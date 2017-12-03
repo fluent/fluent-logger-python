@@ -179,7 +179,12 @@ class FluentHandler(logging.Handler):
 
     def emit(self, record):
         data = self.format(record)
-        return self.sender.emit(None, data)
+        _sender = self.sender
+        return _sender.emit_with_time(None,
+                                      sender.EventTime(record.created)
+                                      if _sender.nanosecond_precision
+                                      else int(record.created),
+                                      data)
 
     def close(self):
         self.acquire()
