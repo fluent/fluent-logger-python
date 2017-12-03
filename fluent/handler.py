@@ -26,9 +26,12 @@ class FluentRecordFormatter(logging.Formatter, object):
     :param datefmt: strftime()-compatible date/time format string.
     :param style: '%', '{' or '$' (used only with Python 3.2 or above)
     :param fill_missing_fmt_key: if True, do not raise a KeyError if the format
-        key is not found. Put None if not found.s
+        key is not found. Put None if not found.
+    :param format_json: if True, will attempt to parse message as json. If not,
+        will use message as-is. Defaults to True
     """
-    def __init__(self, fmt=None, datefmt=None, style='%', fill_missing_fmt_key=False):
+
+    def __init__(self, fmt=None, datefmt=None, style='%', fill_missing_fmt_key=False, format_json=True):
         super(FluentRecordFormatter, self).__init__(None, datefmt)
 
         if sys.version_info[0:2] >= (3, 2) and style != '%':
@@ -56,6 +59,11 @@ class FluentRecordFormatter(logging.Formatter, object):
             self._fmt_dict = basic_fmt_dict
         else:
             self._fmt_dict = fmt
+
+        if format_json:
+            self._format_msg = self._format_msg_json
+        else:
+            self._format_msg = self._format_msg_default
 
         self.hostname = socket.gethostname()
 
@@ -107,17 +115,22 @@ class FluentRecordFormatter(logging.Formatter, object):
         if isinstance(msg, dict):
             self._add_dic(data, msg)
         elif isinstance(msg, basestring):
-            try:
-                json_msg = json.loads(str(msg))
-                if isinstance(json_msg, dict):
-                    self._add_dic(data, json_msg)
-                else:
-                    self._add_dic(data, {'message': str(json_msg)})
-            except ValueError:
-                msg = record.getMessage()
-                self._add_dic(data, {'message': msg})
+            self._add_dic(data, self._format_msg(record, msg))
         else:
             self._add_dic(data, {'message': msg})
+
+    def _format_msg_json(self, record, msg):
+        try:
+            json_msg = json.loads(str(msg))
+            if isinstance(json_msg, dict):
+                return json_msg
+            else:
+                return {'message': str(json_msg)}
+        except ValueError:
+            return self._format_msg_default(record, msg)
+
+    def _format_msg_default(self, record, msg):
+        return {'message': record.getMessage()}
 
     @staticmethod
     def _add_dic(data, dic):
@@ -130,6 +143,7 @@ class FluentHandler(logging.Handler):
     '''
     Logging Handler for fluent.
     '''
+
     def __init__(self,
                  tag,
                  host='localhost',
