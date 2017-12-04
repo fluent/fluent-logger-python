@@ -67,7 +67,7 @@ class CommunicatorThread(threading.Thread):
             # discard oldest
             try:
                 self._queue.get(block=False)
-            except Empty:
+            except Empty:   # pragma: no cover
                 pass
         try:
             self._queue.put(bytes_, block=(not self._queue_circular))
@@ -179,10 +179,10 @@ class FluentSender(sender.FluentSender):
         self._communicator._close()
 
     def _send_internal(self, bytes_):
-        return
+        assert False    # pragma: no cover
 
     def _send_data(self, bytes_):
-        return
+        assert False    # pragma: no cover
 
     # override reconnect, so we don't open a socket here (since it
     # will be opened by the CommunicatorThread)
