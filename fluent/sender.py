@@ -1,34 +1,35 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function
-import struct
+
 import socket
+import struct
 import threading
 import time
 import traceback
 
 import msgpack
 
-
 _global_sender = None
 
 
-def _set_global_sender(sender):
+def _set_global_sender(sender):  # pragma: no cover
     """ [For testing] Function to set global sender directly
     """
     global _global_sender
     _global_sender = sender
 
 
-def setup(tag, **kwargs):
+def setup(tag, **kwargs):  # pragma: no cover
     global _global_sender
     _global_sender = FluentSender(tag, **kwargs)
 
 
-def get_global_sender():
+def get_global_sender():  # pragma: no cover
     return _global_sender
 
-def close():
+
+def close():  # pragma: no cover
     get_global_sender().close()
 
 
@@ -54,7 +55,7 @@ class FluentSender(object):
                  buffer_overflow_handler=None,
                  nanosecond_precision=False,
                  msgpack_kwargs=None,
-                 **kwargs): # This kwargs argument is not used in __init__. This will be removed in the next major version.
+                 **kwargs):  # This kwargs argument is not used in __init__. This will be removed in the next major version.
 
         self.tag = tag
         self.host = host
@@ -98,8 +99,7 @@ class FluentSender(object):
         return self._send(bytes_)
 
     def close(self):
-        self.lock.acquire()
-        try:
+        with self.lock:
             if self.pendings:
                 try:
                     self._send_data(self.pendings)
@@ -108,8 +108,6 @@ class FluentSender(object):
 
             self._close()
             self.pendings = None
-        finally:
-            self.lock.release()
 
     def _make_packet(self, label, timestamp, data):
         if label:
@@ -122,11 +120,8 @@ class FluentSender(object):
         return msgpack.packb(packet, **self.msgpack_kwargs)
 
     def _send(self, bytes_):
-        self.lock.acquire()
-        try:
+        with self.lock:
             return self._send_internal(bytes_)
-        finally:
-            self.lock.release()
 
     def _send_internal(self, bytes_):
         # buffering
@@ -142,7 +137,6 @@ class FluentSender(object):
 
             return True
         except socket.error as e:
-        #except Exception as e:
             self.last_error = e
 
             # close socket
@@ -161,7 +155,13 @@ class FluentSender(object):
         # reconnect if possible
         self._reconnect()
         # send message
-        self.socket.sendall(bytes_)
+        bytes_to_send = len(bytes_)
+        bytes_sent = 0
+        while bytes_sent < bytes_to_send:
+            sent = self.socket.send(bytes_[bytes_sent:])
+            if sent == 0:
+                raise BrokenPipeError(32, 'broken pipe')
+            bytes_sent += sent
 
     def _reconnect(self):
         if not self.socket:
@@ -172,6 +172,8 @@ class FluentSender(object):
             else:
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 sock.settimeout(self.timeout)
+                # This might be controversial and may need to be removed
+                sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
                 sock.connect((self.host, self.port))
             self.socket = sock
 
@@ -189,17 +191,22 @@ class FluentSender(object):
 
     @last_error.setter
     def last_error(self, err):
-        self._last_error_threadlocal.exception  =  err
+        self._last_error_threadlocal.exception = err
 
-    def clear_last_error(self, _thread_id = None):
+    def clear_last_error(self, _thread_id=None):
         if hasattr(self._last_error_threadlocal, 'exception'):
             delattr(self._last_error_threadlocal, 'exception')
 
     def _close(self):
-        if self.socket:
-            self.socket.shutdown(socket.SHUT_RDWR)
-            self.socket.close()
-        self.socket = None
+        try:
+            sock = self.socket
+            if sock:
+                try:
+                    sock.shutdown(socket.SHUT_RDWR)
+                finally:
+                    sock.close()
+        finally:
+            self.socket = None
 
     def __enter__(self):
         return self

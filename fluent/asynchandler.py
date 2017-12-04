@@ -2,7 +2,6 @@
 
 from fluent import asyncsender
 from fluent import handler
-from fluent.handler import FluentRecordFormatter
 
 
 class FluentHandler(handler.FluentHandler):
@@ -14,5 +13,7 @@ class FluentHandler(handler.FluentHandler):
         return asyncsender.FluentSender
 
     def close(self):
-        self.sender.close()
-        super(FluentHandler, self).close()
+        try:
+            self.sender.close()
+        finally:
+            super(FluentHandler, self).close()
