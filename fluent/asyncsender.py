@@ -138,12 +138,6 @@ class CommunicatorThread(threading.Thread):
     def queue_circular(self):
         return self._queue_circular
 
-    def __enter__(self):
-        return self
-
-    def __exit__(self, typ, value, traceback):
-        self.close()
-
 
 class FluentSender(sender.FluentSender):
     def __init__(self,
