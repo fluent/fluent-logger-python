@@ -145,6 +145,27 @@ class TestSender(unittest.TestCase):
         self.assertEqual(self._sender.last_error.args[0], EXCEPTION_MSG)
 
 
+class TestSenderDefaultProperties(unittest.TestCase):
+    def setUp(self):
+        super(TestSenderDefaultProperties, self).setUp()
+        self._server = mockserver.MockRecvServer('localhost')
+        self._sender = fluent.asyncsender.FluentSender(tag='test',
+                                                       port=self._server.port)
+
+    def tearDown(self):
+        self._sender.close()
+
+    def test_default_properties(self):
+        sender = self._sender
+        self.assertTrue(sender.queue_blocking)
+        self.assertFalse(sender.queue_circular)
+        self.assertTrue(isinstance(sender.queue_maxsize, int))
+        self.assertTrue(sender.queue_maxsize > 0)
+        self.assertTrue(isinstance(sender.queue_timeout, (int, float)))
+        self.assertTrue(sender.queue_timeout > 0)
+        sender._close()
+
+
 class TestSenderWithTimeout(unittest.TestCase):
     def setUp(self):
         super(TestSenderWithTimeout, self).setUp()
@@ -195,3 +216,151 @@ class TestEventTime(unittest.TestCase):
         time = fluent.asyncsender.EventTime(1490061367.8616468906402588)
         self.assertEqual(time.code, 0)
         self.assertEqual(time.data, b'X\xd0\x8873[\xb0*')
+
+
+class TestSenderWithTimeoutAndCircular(unittest.TestCase):
+    Q_SIZE = 3
+
+    def setUp(self):
+        super(TestSenderWithTimeoutAndCircular, self).setUp()
+        self._server = mockserver.MockRecvServer('localhost')
+        self._sender = fluent.asyncsender.FluentSender(tag='test',
+                                                       port=self._server.port,
+                                                       queue_timeout=0.04,
+                                                       queue_maxsize=self.Q_SIZE,
+                                                       queue_circular=True)
+
+    def tearDown(self):
+        self._sender.close()
+
+    def get_data(self):
+        return self._server.get_recieved()
+
+    def test_simple(self):
+        sender = self._sender
+
+        self.assertEqual(self._sender.queue_maxsize, self.Q_SIZE)
+        self.assertEqual(self._sender.queue_circular, True)
+        self.assertEqual(self._sender.queue_blocking, False)
+
+        ok = sender.emit('foo1', {'bar': 'baz1'})
+        self.assertTrue(ok)
+        ok = sender.emit('foo2', {'bar': 'baz2'})
+        self.assertTrue(ok)
+        ok = sender.emit('foo3', {'bar': 'baz3'})
+        self.assertTrue(ok)
+        ok = sender.emit('foo4', {'bar': 'baz4'})
+        self.assertTrue(ok)
+        ok = sender.emit('foo5', {'bar': 'baz5'})
+        self.assertTrue(ok)
+        time.sleep(0.5)
+        sender._close()
+        data = self.get_data()
+        eq = self.assertEqual
+        eq(self.Q_SIZE, len(data))
+        eq(3, len(data[0]))
+        eq('test.foo3', data[0][0])
+        eq({'bar': 'baz3'}, data[0][2])
+        self.assertTrue(data[0][1])
+        self.assertTrue(isinstance(data[0][1], int))
+
+        eq(3, len(data[2]))
+        eq('test.foo5', data[2][0])
+        eq({'bar': 'baz5'}, data[2][2])
+
+
+class TestSenderWithTimeoutMaxSizeNonCircular(unittest.TestCase):
+    Q_SIZE = 3
+
+    def setUp(self):
+        super(TestSenderWithTimeoutMaxSizeNonCircular, self).setUp()
+        self._server = mockserver.MockRecvServer('localhost')
+        self._sender = fluent.asyncsender.FluentSender(tag='test',
+                                                       port=self._server.port,
+                                                       queue_timeout=0.04,
+                                                       queue_maxsize=self.Q_SIZE)
+
+    def tearDown(self):
+        self._sender.close()
+
+    def get_data(self):
+        return self._server.get_recieved()
+
+    def test_simple(self):
+        sender = self._sender
+
+        self.assertEqual(self._sender.queue_maxsize, self.Q_SIZE)
+        self.assertEqual(self._sender.queue_blocking, True)
+        self.assertEqual(self._sender.queue_circular, False)
+
+        ok = sender.emit('foo1', {'bar': 'baz1'})
+        self.assertTrue(ok)
+        ok = sender.emit('foo2', {'bar': 'baz2'})
+        self.assertTrue(ok)
+        ok = sender.emit('foo3', {'bar': 'baz3'})
+        self.assertTrue(ok)
+        ok = sender.emit('foo4', {'bar': 'baz4'})
+        self.assertTrue(ok)
+        ok = sender.emit('foo5', {'bar': 'baz5'})
+        self.assertTrue(ok)
+        time.sleep(0.5)
+        sender._close()
+        data = self.get_data()
+        eq = self.assertEqual
+        print(data)
+        eq(5, len(data))
+        eq(3, len(data[0]))
+        eq('test.foo1', data[0][0])
+        eq({'bar': 'baz1'}, data[0][2])
+        self.assertTrue(data[0][1])
+        self.assertTrue(isinstance(data[0][1], int))
+
+        eq(3, len(data[2]))
+        eq('test.foo3', data[2][0])
+        eq({'bar': 'baz3'}, data[2][2])
+
+
+class TestSenderUnlimitedSize(unittest.TestCase):
+    Q_SIZE = 3
+
+    def setUp(self):
+        super(TestSenderUnlimitedSize, self).setUp()
+        self._server = mockserver.MockRecvServer('localhost')
+        self._sender = fluent.asyncsender.FluentSender(tag='test',
+                                                       port=self._server.port,
+                                                       queue_timeout=0.04,
+                                                       queue_maxsize=0)
+
+    def tearDown(self):
+        self._sender.close()
+
+    def get_data(self):
+        return self._server.get_recieved()
+
+    def test_simple(self):
+        sender = self._sender
+
+        self.assertEqual(self._sender.queue_maxsize, 0)
+        self.assertEqual(self._sender.queue_blocking, True)
+        self.assertEqual(self._sender.queue_circular, False)
+
+        NUM = 1000
+        for i in range(1, NUM+1):
+            ok = sender.emit("foo{}".format(i), {'bar': "baz{}".format(i)})
+            self.assertTrue(ok)
+        time.sleep(0.5)
+        sender._close()
+        data = self.get_data()
+        eq = self.assertEqual
+        eq(NUM, len(data))
+        el = data[0]
+        eq(3, len(el))
+        eq('test.foo1', el[0])
+        eq({'bar': 'baz1'}, el[2])
+        self.assertTrue(el[1])
+        self.assertTrue(isinstance(el[1], int))
+
+        el = data[NUM-1]
+        eq(3, len(el))
+        eq("test.foo{}".format(NUM), el[0])
+        eq({'bar': "baz{}".format(NUM)}, el[2])
