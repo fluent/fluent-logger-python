@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
+#  -*- coding: utf-8 -*-
 
 import logging
 import sys
 import unittest
 
 import fluent.handler
-
 from tests import mockserver
 
 
@@ -62,6 +61,42 @@ class TestHandler(unittest.TestCase):
         self.assertEqual('fluent.test', data[0][2]['name'])
         self.assertTrue('lineno' in data[0][2])
         self.assertTrue('emitted_at' in data[0][2])
+
+    def test_exclude_attrs(self):
+        handler = fluent.handler.FluentHandler('app.follow', port=self._port)
+
+        logging.basicConfig(level=logging.INFO)
+        log = logging.getLogger('fluent.test')
+        handler.setFormatter(
+            fluent.handler.FluentRecordFormatter(exclude_attrs=[])
+        )
+        log.addHandler(handler)
+        log.info({'sample': 'value'})
+        handler.close()
+
+        data = self.get_data()
+        self.assertTrue('name' in data[0][2])
+        self.assertEqual('fluent.test', data[0][2]['name'])
+        self.assertTrue('lineno' in data[0][2])
+
+    def test_exclude_attrs_with_extra(self):
+        handler = fluent.handler.FluentHandler('app.follow', port=self._port)
+
+        logging.basicConfig(level=logging.INFO)
+        log = logging.getLogger('fluent.test')
+        handler.setFormatter(
+            fluent.handler.FluentRecordFormatter(exclude_attrs=[])
+        )
+        log.addHandler(handler)
+        log.info("Test with value '%s'", "test value", extra={"x": 1234})
+        handler.close()
+
+        data = self.get_data()
+        self.assertTrue('name' in data[0][2])
+        self.assertEqual('fluent.test', data[0][2]['name'])
+        self.assertTrue('lineno' in data[0][2])
+        self.assertEqual("Test with value 'test value'", data[0][2]['message'])
+        self.assertEqual(1234, data[0][2]['x'])
 
     @unittest.skipUnless(sys.version_info[0:2] >= (3, 2), 'supported with Python 3.2 or above')
     def test_custom_fmt_with_format_style(self):
@@ -135,7 +170,7 @@ class TestHandler(unittest.TestCase):
             fluent.handler.FluentRecordFormatter(fmt={
                 'name': '%(name)s',
                 'custom_field': '%(custom_field)s'
-                },
+            },
                 fill_missing_fmt_key=True
             )
         )

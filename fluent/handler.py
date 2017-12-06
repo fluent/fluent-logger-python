@@ -29,9 +29,14 @@ class FluentRecordFormatter(logging.Formatter, object):
         key is not found. Put None if not found.
     :param format_json: if True, will attempt to parse message as json. If not,
         will use message as-is. Defaults to True
+    :param exclude_attrs: switches this formatter into a mode where all attributes
+        except the ones specified by `exclude_attrs` are logged with the record as is.
+        If `None`, operates as before, otherwise `fmt` is ignored.
+        Can be a `list`, `tuple` or a `set`.
     """
 
-    def __init__(self, fmt=None, datefmt=None, style='%', fill_missing_fmt_key=False, format_json=True):
+    def __init__(self, fmt=None, datefmt=None, style='%', fill_missing_fmt_key=False, format_json=True,
+                 exclude_attrs=None):
         super(FluentRecordFormatter, self).__init__(None, datefmt)
 
         if sys.version_info[0:2] >= (3, 2) and style != '%':
@@ -55,10 +60,15 @@ class FluentRecordFormatter(logging.Formatter, object):
                 'sys_module': '%(module)s',
             }
 
-        if not fmt:
-            self._fmt_dict = basic_fmt_dict
+        if exclude_attrs is not None:
+            self._exc_attrs = set(exclude_attrs)
+            self._fmt_dict = None
         else:
-            self._fmt_dict = fmt
+            self._exc_attrs = None
+            if not fmt:
+                self._fmt_dict = basic_fmt_dict
+            else:
+                self._fmt_dict = fmt
 
         if format_json:
             self._format_msg = self._format_msg_json
@@ -81,25 +91,33 @@ class FluentRecordFormatter(logging.Formatter, object):
 
         # Apply format
         data = {}
-        for key, value in self._fmt_dict.items():
-            try:
-                if self.__style:
-                    value = self.__style(value).format(record)
-                else:
-                    value = value % record.__dict__
-            except KeyError as exc:
-                value = None
-                if not self.fill_missing_fmt_key:
-                    raise exc
+        if self._exc_attrs is not None:
+            for key, value in record.__dict__.items():
+                if key not in self._exc_attrs:
+                    data[key] = value
+        else:
+            for key, value in self._fmt_dict.items():
+                try:
+                    if self.__style:
+                        value = self.__style(value).format(record)
+                    else:
+                        value = value % record.__dict__
+                except KeyError as exc:
+                    value = None
+                    if not self.fill_missing_fmt_key:
+                        raise exc
 
-            data[key] = value
+                data[key] = value
 
         self._structuring(data, record)
         return data
 
     def usesTime(self):
-        return any([value.find('%(asctime)') >= 0
-                    for value in self._fmt_dict.values()])
+        if self._exc_attrs is not None:
+            return super(FluentRecordFormatter, self).usesTime()
+        else:
+            return any([value.find('%(asctime)') >= 0
+                        for value in self._fmt_dict.values()])
 
     def _structuring(self, data, record):
         """ Melds `msg` into `data`.
@@ -152,7 +170,8 @@ class FluentHandler(logging.Handler):
                  verbose=False,
                  buffer_overflow_handler=None,
                  msgpack_kwargs=None,
-                 nanosecond_precision=False):
+                 nanosecond_precision=False,
+                 **kwargs):
 
         self.tag = tag
         self.sender = self.getSenderInstance(tag,
@@ -160,7 +179,8 @@ class FluentHandler(logging.Handler):
                                              timeout=timeout, verbose=verbose,
                                              buffer_overflow_handler=buffer_overflow_handler,
                                              msgpack_kwargs=msgpack_kwargs,
-                                             nanosecond_precision=nanosecond_precision)
+                                             nanosecond_precision=nanosecond_precision,
+                                             **kwargs)
         logging.Handler.__init__(self)
 
     def getSenderClass(self):
@@ -168,14 +188,14 @@ class FluentHandler(logging.Handler):
 
     def getSenderInstance(self, tag, host, port, timeout, verbose,
                           buffer_overflow_handler, msgpack_kwargs,
-                          nanosecond_precision):
+                          nanosecond_precision, **kwargs):
         sender_class = self.getSenderClass()
         return sender_class(tag,
                             host=host, port=port,
                             timeout=timeout, verbose=verbose,
                             buffer_overflow_handler=buffer_overflow_handler,
                             msgpack_kwargs=msgpack_kwargs,
-                            nanosecond_precision=nanosecond_precision)
+                            nanosecond_precision=nanosecond_precision, **kwargs)
 
     def emit(self, record):
         data = self.format(record)
