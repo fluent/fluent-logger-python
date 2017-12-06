@@ -277,3 +277,60 @@ class TestHandler(unittest.TestCase):
         data = self.get_data()
         # For some reason, non-string keys are ignored
         self.assertFalse(42 in data[0][2])
+
+
+class TestHandlerWithCircularQueue(unittest.TestCase):
+    Q_TIMEOUT = 0.04
+    Q_SIZE = 3
+
+    def setUp(self):
+        super(TestHandlerWithCircularQueue, self).setUp()
+        self._server = mockserver.MockRecvServer('localhost')
+        self._port = self._server.port
+        self.handler = None
+
+    def get_handler_class(self):
+        # return fluent.handler.FluentHandler
+        return fluent.asynchandler.FluentHandler
+
+    def get_data(self):
+        return self._server.get_recieved()
+
+    def test_simple(self):
+        handler = self.get_handler_class()('app.follow', port=self._port,
+                                           queue_timeout=self.Q_TIMEOUT,
+                                           queue_maxsize=self.Q_SIZE,
+                                           queue_circular=True)
+        self.handler = handler
+
+        self.assertEqual(self.handler.sender.queue_circular, True)
+        self.assertEqual(self.handler.sender.queue_maxsize, self.Q_SIZE)
+
+        logging.basicConfig(level=logging.INFO)
+        log = logging.getLogger('fluent.test')
+        handler.setFormatter(fluent.handler.FluentRecordFormatter())
+        log.addHandler(handler)
+        log.info({'cnt': 1, 'from': 'userA', 'to': 'userB'})
+        log.info({'cnt': 2, 'from': 'userA', 'to': 'userB'})
+        log.info({'cnt': 3, 'from': 'userA', 'to': 'userB'})
+        log.info({'cnt': 4, 'from': 'userA', 'to': 'userB'})
+        log.info({'cnt': 5, 'from': 'userA', 'to': 'userB'})
+
+        # wait, giving time to the communicator thread to send the messages
+        time.sleep(0.5)
+        # close the handler, to join the thread and let the test suite to terminate
+        handler.close()
+
+        data = self.get_data()
+        eq = self.assertEqual
+        # with the logging interface, we can't be sure to have filled up the queue, so we can
+        # test only for a cautelative condition here
+        self.assertTrue(len(data) >= self.Q_SIZE)
+
+        el = data[0]
+        eq(3, len(el))
+        eq('app.follow', el[0])
+        eq('userA', el[2]['from'])
+        eq('userB', el[2]['to'])
+        self.assertTrue(el[1])
+        self.assertTrue(isinstance(el[1], int))

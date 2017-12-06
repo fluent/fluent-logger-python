@@ -14,6 +14,8 @@ from fluent.sender import EventTime
 _global_sender = None
 
 DEFAULT_QUEUE_TIMEOUT = 0.05
+DEFAULT_QUEUE_MAXSIZE = 100
+DEFAULT_QUEUE_CIRCULAR = False
 
 
 def _set_global_sender(sender):
@@ -46,19 +48,29 @@ class CommunicatorThread(threading.Thread):
                  buffer_overflow_handler=None,
                  nanosecond_precision=False,
                  msgpack_kwargs=None,
-                 queue_timeout=DEFAULT_QUEUE_TIMEOUT, *args, **kwargs):
+                 queue_timeout=DEFAULT_QUEUE_TIMEOUT,
+                 queue_maxsize=DEFAULT_QUEUE_MAXSIZE,
+                 queue_circular=DEFAULT_QUEUE_CIRCULAR, *args, **kwargs):
         super(CommunicatorThread, self).__init__(**kwargs)
-        self._queue = Queue()
+        self._queue = Queue(maxsize=queue_maxsize)
         self._do_run = True
         self._queue_timeout = queue_timeout
+        self._queue_maxsize = queue_maxsize
+        self._queue_circular = queue_circular
         self._conn_close_lock = threading.Lock()
         self._sender = sender.FluentSender(tag=tag, host=host, port=port, bufmax=bufmax, timeout=timeout,
                                            verbose=verbose, buffer_overflow_handler=buffer_overflow_handler,
                                            nanosecond_precision=nanosecond_precision, msgpack_kwargs=msgpack_kwargs)
 
     def send(self, bytes_):
+        if self._queue_circular and self._queue.full():
+            # discard oldest
+            try:
+                self._queue.get(block=False)
+            except Empty:   # pragma: no cover
+                pass
         try:
-            self._queue.put(bytes_)
+            self._queue.put(bytes_, block=(not self._queue_circular))
         except Full:
             return False
         return True
@@ -114,11 +126,17 @@ class CommunicatorThread(threading.Thread):
     def queue_timeout(self, value):
         self._queue_timeout = value
 
-    def __enter__(self):
-        return self
+    @property
+    def queue_maxsize(self):
+        return self._queue_maxsize
 
-    def __exit__(self, typ, value, traceback):
-        self.close()
+    @property
+    def queue_blocking(self):
+        return not self._queue_circular
+
+    @property
+    def queue_circular(self):
+        return self._queue_circular
 
 
 class FluentSender(sender.FluentSender):
@@ -133,6 +151,8 @@ class FluentSender(sender.FluentSender):
                  nanosecond_precision=False,
                  msgpack_kwargs=None,
                  queue_timeout=DEFAULT_QUEUE_TIMEOUT,
+                 queue_maxsize=DEFAULT_QUEUE_MAXSIZE,
+                 queue_circular=DEFAULT_QUEUE_CIRCULAR,
                  **kwargs): # This kwargs argument is not used in __init__. This will be removed in the next major version.
         super(FluentSender, self).__init__(tag=tag, host=host, port=port, bufmax=bufmax, timeout=timeout,
                                            verbose=verbose, buffer_overflow_handler=buffer_overflow_handler,
@@ -141,7 +161,8 @@ class FluentSender(sender.FluentSender):
         self._communicator = CommunicatorThread(tag=tag, host=host, port=port, bufmax=bufmax, timeout=timeout,
                                                 verbose=verbose, buffer_overflow_handler=buffer_overflow_handler,
                                                 nanosecond_precision=nanosecond_precision, msgpack_kwargs=msgpack_kwargs,
-                                                queue_timeout=queue_timeout)
+                                                queue_timeout=queue_timeout, queue_maxsize=queue_maxsize,
+                                                queue_circular=queue_circular)
         self._communicator.start()
 
     def _send(self, bytes_):
@@ -152,10 +173,10 @@ class FluentSender(sender.FluentSender):
         self._communicator._close()
 
     def _send_internal(self, bytes_):
-        return
+        assert False    # pragma: no cover
 
     def _send_data(self, bytes_):
-        return
+        assert False    # pragma: no cover
 
     # override reconnect, so we don't open a socket here (since it
     # will be opened by the CommunicatorThread)
@@ -185,6 +206,18 @@ class FluentSender(sender.FluentSender):
     @queue_timeout.setter
     def queue_timeout(self, value):
         self._communicator.queue_timeout = value
+
+    @property
+    def queue_maxsize(self):
+        return self._communicator.queue_maxsize
+
+    @property
+    def queue_blocking(self):
+        return self._communicator.queue_blocking
+
+    @property
+    def queue_circular(self):
+        return self._communicator.queue_circular
 
     def __enter__(self):
         return self

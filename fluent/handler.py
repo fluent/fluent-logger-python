@@ -170,7 +170,8 @@ class FluentHandler(logging.Handler):
                  verbose=False,
                  buffer_overflow_handler=None,
                  msgpack_kwargs=None,
-                 nanosecond_precision=False):
+                 nanosecond_precision=False,
+                 **kwargs):
 
         self.tag = tag
         self.sender = self.getSenderInstance(tag,
@@ -178,7 +179,8 @@ class FluentHandler(logging.Handler):
                                              timeout=timeout, verbose=verbose,
                                              buffer_overflow_handler=buffer_overflow_handler,
                                              msgpack_kwargs=msgpack_kwargs,
-                                             nanosecond_precision=nanosecond_precision)
+                                             nanosecond_precision=nanosecond_precision,
+                                             **kwargs)
         logging.Handler.__init__(self)
 
     def getSenderClass(self):
@@ -186,14 +188,14 @@ class FluentHandler(logging.Handler):
 
     def getSenderInstance(self, tag, host, port, timeout, verbose,
                           buffer_overflow_handler, msgpack_kwargs,
-                          nanosecond_precision):
+                          nanosecond_precision, **kwargs):
         sender_class = self.getSenderClass()
         return sender_class(tag,
                             host=host, port=port,
                             timeout=timeout, verbose=verbose,
                             buffer_overflow_handler=buffer_overflow_handler,
                             msgpack_kwargs=msgpack_kwargs,
-                            nanosecond_precision=nanosecond_precision)
+                            nanosecond_precision=nanosecond_precision, **kwargs)
 
     def emit(self, record):
         data = self.format(record)
