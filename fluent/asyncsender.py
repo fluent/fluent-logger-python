@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function
+
 import threading
 import time
+
 try:
     from queue import Queue, Full, Empty
 except ImportError:
@@ -11,6 +13,8 @@ except ImportError:
 from fluent import sender
 from fluent.sender import EventTime
 
+__all__ = ["EventTime", "FluentSender"]
+
 _global_sender = None
 
 DEFAULT_QUEUE_TIMEOUT = 0.05
@@ -18,23 +22,23 @@ DEFAULT_QUEUE_MAXSIZE = 100
 DEFAULT_QUEUE_CIRCULAR = False
 
 
-def _set_global_sender(sender):
+def _set_global_sender(sender):  # pragma: no cover
     """ [For testing] Function to set global sender directly
     """
     global _global_sender
     _global_sender = sender
 
 
-def setup(tag, **kwargs):
+def setup(tag, **kwargs):  # pragma: no cover
     global _global_sender
     _global_sender = FluentSender(tag, **kwargs)
 
 
-def get_global_sender():
+def get_global_sender():  # pragma: no cover
     return _global_sender
 
 
-def close():
+def close():  # pragma: no cover
     get_global_sender().close()
 
 
@@ -81,9 +85,8 @@ class CommunicatorThread(threading.Thread):
                 bytes_ = self._queue.get(block=True, timeout=self._queue_timeout)
             except Empty:
                 continue
-            self._conn_close_lock.acquire()
-            self._sender._send(bytes_)
-            self._conn_close_lock.release()
+            with self._conn_close_lock:
+                self._sender._send(bytes_)
 
     def close(self, flush=True, discard=True):
         if discard:
@@ -98,14 +101,8 @@ class CommunicatorThread(threading.Thread):
         self._sender.close()
 
     def _close(self):
-        self._conn_close_lock.acquire()
-        # self._sender.lock.acquire()
-        try:
+        with self._conn_close_lock:
             self._sender._close()
-        finally:
-            # self._sender.lock.release()
-            self._conn_close_lock.release()
-            pass
 
     @property
     def last_error(self):
@@ -115,7 +112,7 @@ class CommunicatorThread(threading.Thread):
     def last_error(self, err):
         self._sender.last_error = err
 
-    def clear_last_error(self, _thread_id = None):
+    def clear_last_error(self, _thread_id=None):
         self._sender.clear_last_error(_thread_id=_thread_id)
 
     @property
@@ -196,7 +193,7 @@ class FluentSender(sender.FluentSender):
     def last_error(self, err):
         self._communicator.last_error = err
 
-    def clear_last_error(self, _thread_id = None):
+    def clear_last_error(self, _thread_id=None):
         self._communicator.clear_last_error(_thread_id=_thread_id)
 
     @property

@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function
-import unittest
+
 import socket
+import unittest
+
 import msgpack
 
 import fluent.sender
@@ -127,8 +129,9 @@ class TestSender(unittest.TestCase):
 
         self.assertEqual(self._sender.last_error, None)
 
-    @unittest.skip("This test failed with 'TypeError: catching classes that do not inherit from BaseException is not allowed' so skipped")
-    #@patch('fluent.sender.socket')
+    @unittest.skip(
+        "This test failed with 'TypeError: catching classes that do not inherit from BaseException is not allowed' so skipped")
+    # @patch('fluent.sender.socket')
     def test_connect_exception_during_sender_init(self, mock_socket):
         # Make the socket.socket().connect() call raise a custom exception
         mock_connect = mock_socket.socket.return_value.connect
