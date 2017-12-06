@@ -2,6 +2,7 @@
 
 from __future__ import print_function
 
+import errno
 import socket
 import struct
 import threading
@@ -55,8 +56,10 @@ class FluentSender(object):
                  buffer_overflow_handler=None,
                  nanosecond_precision=False,
                  msgpack_kwargs=None,
-                 **kwargs):  # This kwargs argument is not used in __init__. This will be removed in the next major version.
-
+                 **kwargs):
+        """
+        :param kwargs: This kwargs argument is not used in __init__. This will be removed in the next major version.
+        """
         self.tag = tag
         self.host = host
         self.port = port
@@ -71,12 +74,6 @@ class FluentSender(object):
         self.pendings = None
         self.lock = threading.Lock()
         self._last_error_threadlocal = threading.local()
-
-        try:
-            self._reconnect()
-        except socket.error:
-            # will be retried in emit()
-            self._close()
 
     def emit(self, label, data):
         if self.nanosecond_precision:
@@ -97,6 +94,18 @@ class FluentSender(object):
                                         "message": "Can't output to log",
                                         "traceback": traceback.format_exc()})
         return self._send(bytes_)
+
+    @property
+    def last_error(self):
+        return getattr(self._last_error_threadlocal, 'exception', None)
+
+    @last_error.setter
+    def last_error(self, err):
+        self._last_error_threadlocal.exception = err
+
+    def clear_last_error(self, _thread_id=None):
+        if hasattr(self._last_error_threadlocal, 'exception'):
+            delattr(self._last_error_threadlocal, 'exception')
 
     def close(self):
         with self.lock:
@@ -142,7 +151,7 @@ class FluentSender(object):
             # close socket
             self._close()
 
-            # clear buffer if it exceeds max bufer size
+            # clear buffer if it exceeds max buffer size
             if self.pendings and (len(self.pendings) > self.bufmax):
                 self._call_buffer_overflow_handler(self.pendings)
                 self.pendings = None
@@ -160,22 +169,30 @@ class FluentSender(object):
         while bytes_sent < bytes_to_send:
             sent = self.socket.send(bytes_[bytes_sent:])
             if sent == 0:
-                raise BrokenPipeError(32, 'broken pipe')
+                raise socket.error(errno.EPIPE, "Broken pipe")
             bytes_sent += sent
 
     def _reconnect(self):
         if not self.socket:
-            if self.host.startswith('unix://'):
-                sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-                sock.settimeout(self.timeout)
-                sock.connect(self.host[len('unix://'):])
+            try:
+                if self.host.startswith('unix://'):
+                    sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+                    sock.settimeout(self.timeout)
+                    sock.connect(self.host[len('unix://'):])
+                else:
+                    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    sock.settimeout(self.timeout)
+                    # This might be controversial and may need to be removed
+                    sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+                    sock.connect((self.host, self.port))
+            except Exception as e:
+                try:
+                    sock.close()
+                except Exception:  # pragma: no cover
+                    pass
+                raise e
             else:
-                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                sock.settimeout(self.timeout)
-                # This might be controversial and may need to be removed
-                sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-                sock.connect((self.host, self.port))
-            self.socket = sock
+                self.socket = sock
 
     def _call_buffer_overflow_handler(self, pending_events):
         try:
@@ -185,26 +202,20 @@ class FluentSender(object):
             # User should care any exception in handler
             pass
 
-    @property
-    def last_error(self):
-        return getattr(self._last_error_threadlocal, 'exception', None)
-
-    @last_error.setter
-    def last_error(self, err):
-        self._last_error_threadlocal.exception = err
-
-    def clear_last_error(self, _thread_id=None):
-        if hasattr(self._last_error_threadlocal, 'exception'):
-            delattr(self._last_error_threadlocal, 'exception')
-
     def _close(self):
         try:
             sock = self.socket
             if sock:
                 try:
-                    sock.shutdown(socket.SHUT_RDWR)
+                    try:
+                        sock.shutdown(socket.SHUT_RDWR)
+                    except socket.error:  # pragma: no cover
+                        pass
                 finally:
-                    sock.close()
+                    try:
+                        sock.close()
+                    except socket.error:  # pragma: no cover
+                        pass
         finally:
             self.socket = None
 
@@ -212,4 +223,7 @@ class FluentSender(object):
         return self
 
     def __exit__(self, typ, value, traceback):
-        self.close()
+        try:
+            self.close()
+        except Exception as e:  # pragma: no cover
+            self.last_error = e

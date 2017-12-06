@@ -81,7 +81,7 @@ class FluentRecordFormatter(logging.Formatter, object):
 
     def format(self, record):
         # Only needed for python2.6
-        if sys.version_info[0:2] <= (2, 6) and self.usesTime():
+        if sys.version_info[0:2] <= (2, 6) and self.usesTime():  # pragma: no cover
             record.asctime = self.formatTime(record, self.datefmt)
 
         # Compute attributes handled by parent class.
@@ -116,8 +116,11 @@ class FluentRecordFormatter(logging.Formatter, object):
         if self._exc_attrs is not None:
             return super(FluentRecordFormatter, self).usesTime()
         else:
-            return any([value.find('%(asctime)') >= 0
-                        for value in self._fmt_dict.values()])
+            if self.__style:
+                search = self.__style.asctime_search
+            else:
+                search = "%(asctime)"
+            return any([value.find(search) >= 0 for value in self._fmt_dict.values()])
 
     def _structuring(self, data, record):
         """ Melds `msg` into `data`.
@@ -209,7 +212,15 @@ class FluentHandler(logging.Handler):
     def close(self):
         self.acquire()
         try:
-            self.sender._close()
-            logging.Handler.close(self)
+            try:
+                self.sender.close()
+            finally:
+                super(FluentHandler, self).close()
         finally:
             self.release()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()

@@ -14,21 +14,27 @@ class TestHandler(unittest.TestCase):
         self._server = mockserver.MockRecvServer('localhost')
         self._port = self._server.port
 
+    def tearDown(self):
+        self._server.close()
+
     def get_data(self):
-        return self._server.get_recieved()
+        return self._server.get_received()
 
     def test_simple(self):
         handler = fluent.handler.FluentHandler('app.follow', port=self._port)
 
-        logging.basicConfig(level=logging.INFO)
-        log = logging.getLogger('fluent.test')
-        handler.setFormatter(fluent.handler.FluentRecordFormatter())
-        log.addHandler(handler)
-        log.info({
-            'from': 'userA',
-            'to': 'userB'
-        })
-        handler.close()
+        with handler:
+            logging.basicConfig(level=logging.INFO)
+            log = logging.getLogger('fluent.test')
+            handler.setFormatter(fluent.handler.FluentRecordFormatter())
+            log.addHandler(handler)
+
+            log.info({
+                'from': 'userA',
+                'to': 'userB'
+            })
+
+            log.removeHandler(handler)
 
         data = self.get_data()
         eq = self.assertEqual
@@ -43,18 +49,19 @@ class TestHandler(unittest.TestCase):
     def test_custom_fmt(self):
         handler = fluent.handler.FluentHandler('app.follow', port=self._port)
 
-        logging.basicConfig(level=logging.INFO)
-        log = logging.getLogger('fluent.test')
-        handler.setFormatter(
-            fluent.handler.FluentRecordFormatter(fmt={
-                'name': '%(name)s',
-                'lineno': '%(lineno)d',
-                'emitted_at': '%(asctime)s',
-            })
-        )
-        log.addHandler(handler)
-        log.info({'sample': 'value'})
-        handler.close()
+        with handler:
+            logging.basicConfig(level=logging.INFO)
+            log = logging.getLogger('fluent.test')
+            handler.setFormatter(
+                fluent.handler.FluentRecordFormatter(fmt={
+                    'name': '%(name)s',
+                    'lineno': '%(lineno)d',
+                    'emitted_at': '%(asctime)s',
+                })
+            )
+            log.addHandler(handler)
+            log.info({'sample': 'value'})
+            log.removeHandler(handler)
 
         data = self.get_data()
         self.assertTrue('name' in data[0][2])
@@ -65,14 +72,33 @@ class TestHandler(unittest.TestCase):
     def test_exclude_attrs(self):
         handler = fluent.handler.FluentHandler('app.follow', port=self._port)
 
-        logging.basicConfig(level=logging.INFO)
-        log = logging.getLogger('fluent.test')
-        handler.setFormatter(
-            fluent.handler.FluentRecordFormatter(exclude_attrs=[])
-        )
-        log.addHandler(handler)
-        log.info({'sample': 'value'})
-        handler.close()
+        with handler:
+            logging.basicConfig(level=logging.INFO)
+            log = logging.getLogger('fluent.test')
+            handler.setFormatter(
+                fluent.handler.FluentRecordFormatter(exclude_attrs=[])
+            )
+            log.addHandler(handler)
+            log.info({'sample': 'value'})
+            log.removeHandler(handler)
+
+        data = self.get_data()
+        self.assertTrue('name' in data[0][2])
+        self.assertEqual('fluent.test', data[0][2]['name'])
+        self.assertTrue('lineno' in data[0][2])
+
+    def test_exclude_attrs_with_exclusion(self):
+        handler = fluent.handler.FluentHandler('app.follow', port=self._port)
+
+        with handler:
+            logging.basicConfig(level=logging.INFO)
+            log = logging.getLogger('fluent.test')
+            handler.setFormatter(
+                fluent.handler.FluentRecordFormatter(exclude_attrs=["funcName"])
+            )
+            log.addHandler(handler)
+            log.info({'sample': 'value'})
+            log.removeHandler(handler)
 
         data = self.get_data()
         self.assertTrue('name' in data[0][2])
@@ -82,14 +108,15 @@ class TestHandler(unittest.TestCase):
     def test_exclude_attrs_with_extra(self):
         handler = fluent.handler.FluentHandler('app.follow', port=self._port)
 
-        logging.basicConfig(level=logging.INFO)
-        log = logging.getLogger('fluent.test')
-        handler.setFormatter(
-            fluent.handler.FluentRecordFormatter(exclude_attrs=[])
-        )
-        log.addHandler(handler)
-        log.info("Test with value '%s'", "test value", extra={"x": 1234})
-        handler.close()
+        with handler:
+            logging.basicConfig(level=logging.INFO)
+            log = logging.getLogger('fluent.test')
+            handler.setFormatter(
+                fluent.handler.FluentRecordFormatter(exclude_attrs=[])
+            )
+            log.addHandler(handler)
+            log.info("Test with value '%s'", "test value", extra={"x": 1234})
+            log.removeHandler(handler)
 
         data = self.get_data()
         self.assertTrue('name' in data[0][2])
@@ -102,18 +129,19 @@ class TestHandler(unittest.TestCase):
     def test_custom_fmt_with_format_style(self):
         handler = fluent.handler.FluentHandler('app.follow', port=self._port)
 
-        logging.basicConfig(level=logging.INFO)
-        log = logging.getLogger('fluent.test')
-        handler.setFormatter(
-            fluent.handler.FluentRecordFormatter(fmt={
-                'name': '{name}',
-                'lineno': '{lineno}',
-                'emitted_at': '{asctime}',
-            }, style='{')
-        )
-        log.addHandler(handler)
-        log.info({'sample': 'value'})
-        handler.close()
+        with handler:
+            logging.basicConfig(level=logging.INFO)
+            log = logging.getLogger('fluent.test')
+            handler.setFormatter(
+                fluent.handler.FluentRecordFormatter(fmt={
+                    'name': '{name}',
+                    'lineno': '{lineno}',
+                    'emitted_at': '{asctime}',
+                }, style='{')
+            )
+            log.addHandler(handler)
+            log.info({'sample': 'value'})
+            log.removeHandler(handler)
 
         data = self.get_data()
         self.assertTrue('name' in data[0][2])
@@ -125,18 +153,19 @@ class TestHandler(unittest.TestCase):
     def test_custom_fmt_with_template_style(self):
         handler = fluent.handler.FluentHandler('app.follow', port=self._port)
 
-        logging.basicConfig(level=logging.INFO)
-        log = logging.getLogger('fluent.test')
-        handler.setFormatter(
-            fluent.handler.FluentRecordFormatter(fmt={
-                'name': '${name}',
-                'lineno': '${lineno}',
-                'emitted_at': '${asctime}',
-            }, style='$')
-        )
-        log.addHandler(handler)
-        log.info({'sample': 'value'})
-        handler.close()
+        with handler:
+            logging.basicConfig(level=logging.INFO)
+            log = logging.getLogger('fluent.test')
+            handler.setFormatter(
+                fluent.handler.FluentRecordFormatter(fmt={
+                    'name': '${name}',
+                    'lineno': '${lineno}',
+                    'emitted_at': '${asctime}',
+                }, style='$')
+            )
+            log.addHandler(handler)
+            log.info({'sample': 'value'})
+            log.removeHandler(handler)
 
         data = self.get_data()
         self.assertTrue('name' in data[0][2])
@@ -147,37 +176,39 @@ class TestHandler(unittest.TestCase):
     def test_custom_field_raise_exception(self):
         handler = fluent.handler.FluentHandler('app.follow', port=self._port)
 
-        logging.basicConfig(level=logging.INFO)
-        log = logging.getLogger('fluent.test')
-        handler.setFormatter(
-            fluent.handler.FluentRecordFormatter(fmt={
-                'name': '%(name)s',
-                'custom_field': '%(custom_field)s'
-            })
-        )
-        log.addHandler(handler)
-        with self.assertRaises(KeyError):
-            log.info({'sample': 'value'})
-        log.removeHandler(handler)
-        handler.close()
+        with handler:
+            logging.basicConfig(level=logging.INFO)
+            log = logging.getLogger('fluent.test')
+            handler.setFormatter(
+                fluent.handler.FluentRecordFormatter(fmt={
+                    'name': '%(name)s',
+                    'custom_field': '%(custom_field)s'
+                })
+            )
+            log.addHandler(handler)
+
+            with self.assertRaises(KeyError):
+                log.info({'sample': 'value'})
+
+            log.removeHandler(handler)
 
     def test_custom_field_fill_missing_fmt_key_is_true(self):
         handler = fluent.handler.FluentHandler('app.follow', port=self._port)
 
-        logging.basicConfig(level=logging.INFO)
-        log = logging.getLogger('fluent.test')
-        handler.setFormatter(
-            fluent.handler.FluentRecordFormatter(fmt={
-                'name': '%(name)s',
-                'custom_field': '%(custom_field)s'
-            },
-                fill_missing_fmt_key=True
+        with handler:
+            logging.basicConfig(level=logging.INFO)
+            log = logging.getLogger('fluent.test')
+            handler.setFormatter(
+                fluent.handler.FluentRecordFormatter(fmt={
+                    'name': '%(name)s',
+                    'custom_field': '%(custom_field)s'
+                },
+                    fill_missing_fmt_key=True
+                )
             )
-        )
-        log.addHandler(handler)
-        log.info({'sample': 'value'})
-        log.removeHandler(handler)
-        handler.close()
+            log.addHandler(handler)
+            log.info({'sample': 'value'})
+            log.removeHandler(handler)
 
         data = self.get_data()
         self.assertTrue('name' in data[0][2])
@@ -189,12 +220,15 @@ class TestHandler(unittest.TestCase):
     def test_json_encoded_message(self):
         handler = fluent.handler.FluentHandler('app.follow', port=self._port)
 
-        logging.basicConfig(level=logging.INFO)
-        log = logging.getLogger('fluent.test')
-        handler.setFormatter(fluent.handler.FluentRecordFormatter())
-        log.addHandler(handler)
-        log.info('{"key": "hello world!", "param": "value"}')
-        handler.close()
+        with handler:
+            logging.basicConfig(level=logging.INFO)
+            log = logging.getLogger('fluent.test')
+            handler.setFormatter(fluent.handler.FluentRecordFormatter())
+            log.addHandler(handler)
+
+            log.info('{"key": "hello world!", "param": "value"}')
+
+            log.removeHandler(handler)
 
         data = self.get_data()
         self.assertTrue('key' in data[0][2])
@@ -203,12 +237,15 @@ class TestHandler(unittest.TestCase):
     def test_json_encoded_message_without_json(self):
         handler = fluent.handler.FluentHandler('app.follow', port=self._port)
 
-        logging.basicConfig(level=logging.INFO)
-        log = logging.getLogger('fluent.test')
-        handler.setFormatter(fluent.handler.FluentRecordFormatter(format_json=False))
-        log.addHandler(handler)
-        log.info('{"key": "hello world!", "param": "value"}')
-        handler.close()
+        with handler:
+            logging.basicConfig(level=logging.INFO)
+            log = logging.getLogger('fluent.test')
+            handler.setFormatter(fluent.handler.FluentRecordFormatter(format_json=False))
+            log.addHandler(handler)
+
+            log.info('{"key": "hello world!", "param": "value"}')
+
+            log.removeHandler(handler)
 
         data = self.get_data()
         self.assertTrue('key' not in data[0][2])
@@ -217,12 +254,13 @@ class TestHandler(unittest.TestCase):
     def test_unstructured_message(self):
         handler = fluent.handler.FluentHandler('app.follow', port=self._port)
 
-        logging.basicConfig(level=logging.INFO)
-        log = logging.getLogger('fluent.test')
-        handler.setFormatter(fluent.handler.FluentRecordFormatter())
-        log.addHandler(handler)
-        log.info('hello %s', 'world')
-        handler.close()
+        with handler:
+            logging.basicConfig(level=logging.INFO)
+            log = logging.getLogger('fluent.test')
+            handler.setFormatter(fluent.handler.FluentRecordFormatter())
+            log.addHandler(handler)
+            log.info('hello %s', 'world')
+            log.removeHandler(handler)
 
         data = self.get_data()
         self.assertTrue('message' in data[0][2])
@@ -231,12 +269,13 @@ class TestHandler(unittest.TestCase):
     def test_unstructured_formatted_message(self):
         handler = fluent.handler.FluentHandler('app.follow', port=self._port)
 
-        logging.basicConfig(level=logging.INFO)
-        log = logging.getLogger('fluent.test')
-        handler.setFormatter(fluent.handler.FluentRecordFormatter())
-        log.addHandler(handler)
-        log.info('hello world, %s', 'you!')
-        handler.close()
+        with handler:
+            logging.basicConfig(level=logging.INFO)
+            log = logging.getLogger('fluent.test')
+            handler.setFormatter(fluent.handler.FluentRecordFormatter())
+            log.addHandler(handler)
+            log.info('hello world, %s', 'you!')
+            log.removeHandler(handler)
 
         data = self.get_data()
         self.assertTrue('message' in data[0][2])
@@ -245,12 +284,13 @@ class TestHandler(unittest.TestCase):
     def test_number_string_simple_message(self):
         handler = fluent.handler.FluentHandler('app.follow', port=self._port)
 
-        logging.basicConfig(level=logging.INFO)
-        log = logging.getLogger('fluent.test')
-        handler.setFormatter(fluent.handler.FluentRecordFormatter())
-        log.addHandler(handler)
-        log.info("1")
-        handler.close()
+        with handler:
+            logging.basicConfig(level=logging.INFO)
+            log = logging.getLogger('fluent.test')
+            handler.setFormatter(fluent.handler.FluentRecordFormatter())
+            log.addHandler(handler)
+            log.info("1")
+            log.removeHandler(handler)
 
         data = self.get_data()
         self.assertTrue('message' in data[0][2])
@@ -258,12 +298,13 @@ class TestHandler(unittest.TestCase):
     def test_non_string_simple_message(self):
         handler = fluent.handler.FluentHandler('app.follow', port=self._port)
 
-        logging.basicConfig(level=logging.INFO)
-        log = logging.getLogger('fluent.test')
-        handler.setFormatter(fluent.handler.FluentRecordFormatter())
-        log.addHandler(handler)
-        log.info(42)
-        handler.close()
+        with handler:
+            logging.basicConfig(level=logging.INFO)
+            log = logging.getLogger('fluent.test')
+            handler.setFormatter(fluent.handler.FluentRecordFormatter())
+            log.addHandler(handler)
+            log.info(42)
+            log.removeHandler(handler)
 
         data = self.get_data()
         self.assertTrue('message' in data[0][2])
@@ -271,12 +312,13 @@ class TestHandler(unittest.TestCase):
     def test_non_string_dict_message(self):
         handler = fluent.handler.FluentHandler('app.follow', port=self._port)
 
-        logging.basicConfig(level=logging.INFO)
-        log = logging.getLogger('fluent.test')
-        handler.setFormatter(fluent.handler.FluentRecordFormatter())
-        log.addHandler(handler)
-        log.info({42: 'root'})
-        handler.close()
+        with handler:
+            logging.basicConfig(level=logging.INFO)
+            log = logging.getLogger('fluent.test')
+            handler.setFormatter(fluent.handler.FluentRecordFormatter())
+            log.addHandler(handler)
+            log.info({42: 'root'})
+            log.removeHandler(handler)
 
         data = self.get_data()
         # For some reason, non-string keys are ignored
