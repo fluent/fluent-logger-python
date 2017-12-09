@@ -22,7 +22,10 @@ class FluentRecordFormatter(logging.Formatter, object):
 
     Best used with server storing data in an ElasticSearch cluster for example.
 
-    :param fmt: a dict with format string as values to map to provided keys.
+    :param fmt: a dict or a callable with format string as values to map to provided keys.
+        If callable, should accept a single argument `LogRecord` and return a dict,
+        and have a field `usesTime` that is callable and return a bool as would
+        `FluentRecordFormatter.usesTime`
     :param datefmt: strftime()-compatible date/time format string.
     :param style: '%', '{' or '$' (used only with Python 3.2 or above)
     :param fill_missing_fmt_key: if True, do not raise a KeyError if the format
@@ -32,7 +35,7 @@ class FluentRecordFormatter(logging.Formatter, object):
     :param exclude_attrs: switches this formatter into a mode where all attributes
         except the ones specified by `exclude_attrs` are logged with the record as is.
         If `None`, operates as before, otherwise `fmt` is ignored.
-        Can be a `list`, `tuple` or a `set`.
+        Can be an iterable.
     """
 
     def __init__(self, fmt=None, datefmt=None, style='%', fill_missing_fmt_key=False, format_json=True,
@@ -63,12 +66,22 @@ class FluentRecordFormatter(logging.Formatter, object):
         if exclude_attrs is not None:
             self._exc_attrs = set(exclude_attrs)
             self._fmt_dict = None
+            self._formatter = self._format_by_exclusion
+            self.usesTime = super(FluentRecordFormatter, self).usesTime
         else:
             self._exc_attrs = None
             if not fmt:
                 self._fmt_dict = basic_fmt_dict
+                self._formatter = self._format_by_dict
+                self.usesTime = self._format_by_dict_uses_time
             else:
-                self._fmt_dict = fmt
+                if hasattr(fmt, "__call__"):
+                    self._formatter = fmt
+                    self.usesTime = fmt.usesTime
+                else:
+                    self._fmt_dict = fmt
+                    self._formatter = self._format_by_dict
+                    self.usesTime = self._format_by_dict_uses_time
 
         if format_json:
             self._format_msg = self._format_msg_json
@@ -90,37 +103,13 @@ class FluentRecordFormatter(logging.Formatter, object):
         record.hostname = self.hostname
 
         # Apply format
-        data = {}
-        if self._exc_attrs is not None:
-            for key, value in record.__dict__.items():
-                if key not in self._exc_attrs:
-                    data[key] = value
-        else:
-            for key, value in self._fmt_dict.items():
-                try:
-                    if self.__style:
-                        value = self.__style(value).format(record)
-                    else:
-                        value = value % record.__dict__
-                except KeyError as exc:
-                    value = None
-                    if not self.fill_missing_fmt_key:
-                        raise exc
-
-                data[key] = value
+        data = self._formatter(record)
 
         self._structuring(data, record)
         return data
 
     def usesTime(self):
-        if self._exc_attrs is not None:
-            return super(FluentRecordFormatter, self).usesTime()
-        else:
-            if self.__style:
-                search = self.__style.asctime_search
-            else:
-                search = "%(asctime)"
-            return any([value.find(search) >= 0 for value in self._fmt_dict.values()])
+        """This method is substituted on construction based on settings for performance reasons"""
 
     def _structuring(self, data, record):
         """ Melds `msg` into `data`.
@@ -152,6 +141,36 @@ class FluentRecordFormatter(logging.Formatter, object):
 
     def _format_msg_default(self, record, msg):
         return {'message': record.getMessage()}
+
+    def _format_by_exclusion(self, record):
+        data = {}
+        for key, value in record.__dict__.items():
+            if key not in self._exc_attrs:
+                data[key] = value
+        return data
+
+    def _format_by_dict(self, record):
+        data = {}
+        for key, value in self._fmt_dict.items():
+            try:
+                if self.__style:
+                    value = self.__style(value).format(record)
+                else:
+                    value = value % record.__dict__
+            except KeyError as exc:
+                value = None
+                if not self.fill_missing_fmt_key:
+                    raise exc
+
+            data[key] = value
+        return data
+
+    def _format_by_dict_uses_time(self):
+        if self.__style:
+            search = self.__style.asctime_search
+        else:
+            search = "%(asctime)"
+        return any([value.find(search) >= 0 for value in self._fmt_dict.values()])
 
     @staticmethod
     def _add_dic(data, dic):
