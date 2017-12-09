@@ -2,8 +2,12 @@
 
 from __future__ import print_function
 
+import errno
 import socket
+import sys
 import unittest
+from shutil import rmtree
+from tempfile import mkdtemp
 
 import msgpack
 
@@ -49,10 +53,13 @@ class TestSender(unittest.TestCase):
                                                   port=self._server.port)
 
     def tearDown(self):
-        self._sender.close()
+        try:
+            self._sender.close()
+        finally:
+            self._server.close()
 
     def get_data(self):
-        return self._server.get_recieved()
+        return self._server.get_received()
 
     def test_simple(self):
         sender = self._sender
@@ -128,17 +135,114 @@ class TestSender(unittest.TestCase):
         self._sender.clear_last_error()
 
         self.assertEqual(self._sender.last_error, None)
+        self._sender.clear_last_error()
+        self.assertEqual(self._sender.last_error, None)
 
-    @unittest.skip(
-        "This test failed with 'TypeError: catching classes that do not inherit from BaseException is not allowed' so skipped")
-    # @patch('fluent.sender.socket')
-    def test_connect_exception_during_sender_init(self, mock_socket):
-        # Make the socket.socket().connect() call raise a custom exception
-        mock_connect = mock_socket.socket.return_value.connect
-        EXCEPTION_MSG = "a sender init socket connect() exception"
-        mock_connect.side_effect = socket.error(EXCEPTION_MSG)
+    def test_emit_error(self):
+        with self._sender as sender:
+            sender.emit("blah", {"a": object()})
 
-        self.assertEqual(self._sender.last_error.args[0], EXCEPTION_MSG)
+        data = self._server.get_received()
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0][2]["message"], "Can't output to log")
+
+    def test_verbose(self):
+        with self._sender as sender:
+            sender.verbose = True
+            sender.emit('foo', {'bar': 'baz'})
+            # No assertions here, just making sure there are no exceptions
+
+    def test_failure_to_connect(self):
+        self._server.close()
+
+        with self._sender as sender:
+            sender._send_internal(b"123")
+            self.assertEqual(sender.pendings, b"123")
+            self.assertIsNone(sender.socket)
+
+            sender._send_internal(b"456")
+            self.assertEqual(sender.pendings, b"123456")
+            self.assertIsNone(sender.socket)
+
+            sender.pendings = None
+            overflows = []
+
+            def boh(buf):
+                overflows.append(buf)
+
+            def boh_with_error(buf):
+                raise RuntimeError
+
+            sender.buffer_overflow_handler = boh
+
+            sender._send_internal(b"0" * sender.bufmax)
+            self.assertFalse(overflows)  # No overflow
+
+            sender._send_internal(b"1")
+            self.assertTrue(overflows)
+            self.assertEqual(overflows.pop(0), b"0" * sender.bufmax + b"1")
+
+            sender.buffer_overflow_handler = None
+            sender._send_internal(b"0" * sender.bufmax)
+            sender._send_internal(b"1")
+            self.assertIsNone(sender.pendings)
+
+            sender.buffer_overflow_handler = boh_with_error
+            sender._send_internal(b"0" * sender.bufmax)
+            sender._send_internal(b"1")
+            self.assertIsNone(sender.pendings)
+
+            sender._send_internal(b"1")
+            self.assertFalse(overflows)  # No overflow
+            self.assertEqual(sender.pendings, b"1")
+            self.assertIsNone(sender.socket)
+
+            sender.buffer_overflow_handler = boh
+            sender.close()
+            self.assertEqual(overflows.pop(0), b"1")
+
+    def test_broken_conn(self):
+        with self._sender as sender:
+            sender._send_internal(b"123")
+            self.assertIsNone(sender.pendings, b"123")
+            self.assertTrue(sender.socket)
+
+            class FakeSocket:
+                def send(self, bytes_):
+                    return 0
+
+                def shutdown(self, mode):
+                    pass
+
+                def close(self):
+                    pass
+
+            old_sock = self._sender.socket
+            self._sender.socket = FakeSocket()
+            try:
+                self.assertFalse(sender._send_internal(b"456"))
+                self.assertTrue(sender.last_error.errno, errno.EPIPE)
+            finally:
+                self._sender.socket = old_sock
+
+    @unittest.skipIf(sys.platform == "win32", "Unix socket not supported")
+    def test_unix_socket(self):
+        self.tearDown()
+        tmp_dir = mkdtemp()
+        try:
+            server_file = 'unix://' + tmp_dir + "/tmp.unix"
+            self._server = mockserver.MockRecvServer(server_file)
+            self._sender = fluent.sender.FluentSender(tag='test',
+                                                      host=server_file)
+            with self._sender as sender:
+                self.assertTrue(sender.emit('foo', {'bar': 'baz'}))
+
+            data = self._server.get_received()
+            self.assertEqual(len(data), 1)
+            self.assertEqual(data[0][2], {'bar': 'baz'})
+
+        finally:
+            rmtree(tmp_dir, True)
 
 
 class TestEventTime(unittest.TestCase):

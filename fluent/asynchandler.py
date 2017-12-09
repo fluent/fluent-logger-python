@@ -13,7 +13,17 @@ class FluentHandler(handler.FluentHandler):
         return asyncsender.FluentSender
 
     def close(self):
+        self.acquire()
         try:
-            self.sender.close()
+            try:
+                self.sender.close()
+            finally:
+                super(FluentHandler, self).close()
         finally:
-            super(FluentHandler, self).close()
+            self.release()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.close()

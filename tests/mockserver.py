@@ -7,7 +7,6 @@ except ImportError:
 
 import socket
 import threading
-import time
 
 from msgpack import Unpacker
 
@@ -16,39 +15,85 @@ class MockRecvServer(threading.Thread):
     """
     Single threaded server accepts one connection and recv until EOF.
     """
+
     def __init__(self, host='localhost', port=0):
+        super(MockRecvServer, self).__init__()
+
         if host.startswith('unix://'):
-            self._sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            self._sock.bind(host[len('unix://'):])
+            self.socket_proto = socket.AF_UNIX
+            self.socket_type = socket.SOCK_STREAM
+            self.socket_addr = host[len('unix://'):]
         else:
-            self._sock = socket.socket()
-            self._sock.bind((host, port))
+            self.socket_proto = socket.AF_INET
+            self.socket_type = socket.SOCK_STREAM
+            self.socket_addr = (host, port)
+
+        self._sock = socket.socket(self.socket_proto, self.socket_type)
+        self._sock.bind(self.socket_addr)
+        if self.socket_proto == socket.AF_INET:
             self.port = self._sock.getsockname()[1]
+
         self._sock.listen(1)
         self._buf = BytesIO()
+        self._con = None
 
-        threading.Thread.__init__(self)
         self.start()
 
     def run(self):
         sock = self._sock
-        con, _ = sock.accept()
-        while True:
-            data = con.recv(4096)
-            if not data:
-                break
-            self._buf.write(data)
-        con.close()
-        sock.close()
-        self._sock = None
 
-    def wait(self):
-        while self._sock:
-            time.sleep(0.1)
+        try:
+            try:
+                con, _ = sock.accept()
+            except Exception:
+                return
+            self._con = con
+            try:
+                while True:
+                    try:
+                        data = con.recv(16384)
+                        if not data:
+                            break
+                        self._buf.write(data)
+                    except socket.error as e:
+                        print("MockServer error: %s" % e)
+                        break
+            finally:
+                con.close()
+        finally:
+            sock.close()
 
-    def get_recieved(self):
-        self.wait()
+    def get_received(self):
+        self.join()
         self._buf.seek(0)
         # TODO: have to process string encoding properly. currently we assume
         # that all encoding is utf-8.
         return list(Unpacker(self._buf, encoding='utf-8'))
+
+    def close(self):
+
+        try:
+            self._sock.close()
+        except Exception:
+            pass
+
+        try:
+            conn = socket.socket(socket.AF_INET,
+                                 socket.SOCK_STREAM)
+            try:
+                conn.connect((self.socket_addr[0], self.port))
+            finally:
+                conn.close()
+        except Exception:
+            pass
+
+        if self._con:
+            try:
+                self._con.close()
+            except Exception:
+                pass
+
+        self.join()
+
+    def __del__(self):
+        self.close()
