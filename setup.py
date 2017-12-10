@@ -12,7 +12,7 @@ desc = 'A Python logging handler for Fluentd event collector'
 
 setup(
   name='fluent-logger',
-  version='0.7.0',
+  version='0.8.0',
   description=desc,
   long_description=open(README).read(),
   package_dir={'fluent': 'fluent'},
@@ -25,9 +25,20 @@ setup(
   license='Apache License, Version 2.0',
   classifiers=[
     'Programming Language :: Python :: 2',
+    'Programming Language :: Python :: 2.7',
     'Programming Language :: Python :: 3',
-    'Development Status :: 4 - Beta',
+    'Programming Language :: Python :: 3.2',
+    'Programming Language :: Python :: 3.3',
+    'Programming Language :: Python :: 3.4',
+    'Programming Language :: Python :: 3.5',
+    'Programming Language :: Python :: 3.6',
+    'Programming Language :: Python :: 3.7',
+    'Programming Language :: Python :: Implementation :: CPython',
+    'Programming Language :: Python :: Implementation :: PyPy',
+    'Development Status :: 5 - Production/Stable',
+    'Topic :: System :: Logging',
     'Intended Audience :: Developers',
   ],
+  python_requires=">=2.7,!=3.0,!=3.1,<3.8",
   test_suite='tests'
 )
