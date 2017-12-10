@@ -26,7 +26,7 @@ deploy:
     secure: "ePNUJvw76/pGM+c++vJ1Qa2a2/PZ0bWc04So9ZRTxlOWao4+ZgldsKqqFUps3NqyfddNUDwkoz7mNwJGMcLnkAJK9dhobolIdyMEVke1iQkXEJAuxQ6I3ezZp2wRYOfIl7+ztqXauZA5DflXVnfeOfPZpzvwLsFClFlklyCfWJM="
   on:
     tags: true
-    condition: '"$TRAVIS_PYTHON_VERSION" = "3.6" -o "$TRAVIS_PYTHON_VERSION" = "2.7"'
+    condition: '"$TRAVIS_PYTHON_VERSION" = "3.6" || "$TRAVIS_PYTHON_VERSION" = "2.7"'
   distributions: "sdist bdist_wheel"
 
 matrix:
