@@ -348,10 +348,11 @@ or for the python logging interface:
 sure the communication thread terminates and it's joined correctly. Otherwise the program won't exit, waiting for
 the thread, unless forcibly killed.
 
-#### Circular queue mode
+Circular queue mode
++++++++++++++++++++
 
 In some applications it can be especially important to guarantee that the logging process won't block under *any*
-circumstance, even when it's logging faster than the sending thread could handle (_backpressure_). In this case it's
+circumstance, even when it's logging faster than the sending thread could handle (*backpressure*). In this case it's
 possible to enable the `circular queue` mode, by passing `True` in the `queue_circular` parameter of
 ``asyncsender.FluentSender`` or ``asynchandler.FluentHandler``. By doing so the thread doing the logging won't block
 even when the queue is full, the new event will be added to the queue by discarding the oldest one.
