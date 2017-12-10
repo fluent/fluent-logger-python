@@ -125,6 +125,33 @@ class TestHandler(unittest.TestCase):
         self.assertEqual("Test with value 'test value'", data[0][2]['message'])
         self.assertEqual(1234, data[0][2]['x'])
 
+    def test_format_dynamic(self):
+        def formatter(record):
+            return {
+                "message": record.message,
+                "x": record.x,
+                "custom_value": 1
+            }
+
+        formatter.usesTime = lambda: True
+
+        handler = fluent.handler.FluentHandler('app.follow', port=self._port)
+
+        with handler:
+            logging.basicConfig(level=logging.INFO)
+            log = logging.getLogger('fluent.test')
+            handler.setFormatter(
+                fluent.handler.FluentRecordFormatter(fmt=formatter)
+            )
+            log.addHandler(handler)
+            log.info("Test with value '%s'", "test value", extra={"x": 1234})
+            log.removeHandler(handler)
+
+        data = self.get_data()
+        self.assertTrue('x' in data[0][2])
+        self.assertEqual(1234, data[0][2]['x'])
+        self.assertEqual(1, data[0][2]['custom_value'])
+
     @unittest.skipUnless(sys.version_info[0:2] >= (3, 2), 'supported with Python 3.2 or above')
     def test_custom_fmt_with_format_style(self):
         handler = fluent.handler.FluentHandler('app.follow', port=self._port)
