@@ -23,10 +23,10 @@ after_success:
 
 deploy:
   provider: pypi
-  user: "repeatedly"
+  user: repeatedly
   server: https://upload.pypi.org/legacy/
   password:
-    secure: ePNUJvw76/pGM+c++vJ1Qa2a2/PZ0bWc04So9ZRTxlOWao4+ZgldsKqqFUps3NqyfddNUDwkoz7mNwJGMcLnkAJK9dhobolIdyMEVke1iQkXEJAuxQ6I3ezZp2wRYOfIl7+ztqXauZA5DflXVnfeOfPZpzvwLsFClFlklyCfWJM=
+    secure: CpNaj4F3TZvpP1aSJWidh/XexrWODV2sBdObrYU79Gyh9hFl6WLsA3JM9BfVsy9cGb/P/jP6ly4Z0/6qdIzZ5D6FPOB1B7rn5GZ2LAMOypRCA6W2uJbRjUU373Wut0p0OmQcMPto6XJsMlpvOEq+1uAq+LLAnAGEmmYTeskZebs=
   on:
     tags: true
     condition: '"$TRAVIS_PYTHON_VERSION" = "3.6" || "$TRAVIS_PYTHON_VERSION" = "2.7"'
