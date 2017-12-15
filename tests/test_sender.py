@@ -146,6 +146,16 @@ class TestSender(unittest.TestCase):
         self.assertEqual(len(data), 1)
         self.assertEqual(data[0][2]["message"], "Can't output to log")
 
+    def test_emit_after_close(self):
+        with self._sender as sender:
+            self.assertTrue(sender.emit("blah", {"a": "123"}))
+            sender.close()
+            self.assertFalse(sender.emit("blah", {"a": "456"}))
+
+        data = self._server.get_received()
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0][2]["a"], "123")
+
     def test_verbose(self):
         with self._sender as sender:
             sender.verbose = True

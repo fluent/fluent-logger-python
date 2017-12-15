@@ -73,6 +73,7 @@ class FluentSender(object):
         self.socket = None
         self.pendings = None
         self.lock = threading.Lock()
+        self._closed = False
         self._last_error_threadlocal = threading.local()
 
     def emit(self, label, data):
@@ -109,6 +110,9 @@ class FluentSender(object):
 
     def close(self):
         with self.lock:
+            if self._closed:
+                return
+            self._closed = True
             if self.pendings:
                 try:
                     self._send_data(self.pendings)
@@ -130,6 +134,8 @@ class FluentSender(object):
 
     def _send(self, bytes_):
         with self.lock:
+            if self._closed:
+                return False
             return self._send_internal(bytes_)
 
     def _send_internal(self, bytes_):
