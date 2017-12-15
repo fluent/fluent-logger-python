@@ -24,7 +24,7 @@ Python application.
 Requirements
 ------------
 
--  Python 2.6 or greater including 3.x
+-  Python 2.7 or 3.4+
 - ``msgpack-python``
 
 Installation

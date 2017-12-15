@@ -93,10 +93,6 @@ class FluentRecordFormatter(logging.Formatter, object):
         self.fill_missing_fmt_key = fill_missing_fmt_key
 
     def format(self, record):
-        # Only needed for python2.6
-        if sys.version_info[0:2] <= (2, 6) and self.usesTime():  # pragma: no cover
-            record.asctime = self.formatTime(record, self.datefmt)
-
         # Compute attributes handled by parent class.
         super(FluentRecordFormatter, self).format(record)
         # Add ours
@@ -180,9 +176,9 @@ class FluentRecordFormatter(logging.Formatter, object):
 
 
 class FluentHandler(logging.Handler):
-    '''
+    """
     Logging Handler for fluent.
-    '''
+    """
 
     def __init__(self,
                  tag,
