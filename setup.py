@@ -17,7 +17,7 @@ setup(
   long_description=open(README).read(),
   package_dir={'fluent': 'fluent'},
   packages=['fluent'],
-  install_requires=['msgpack-python'],
+  install_requires=['msgpack-python<=0.4.8'],
   author='Kazuki Ohta',
   author_email='kazuki.ohta@gmail.com',
   url='https://github.com/fluent/fluent-logger-python',
