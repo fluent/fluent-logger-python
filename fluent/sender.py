@@ -166,17 +166,34 @@ class FluentSender(object):
 
             return False
 
+    def _check_recv_side(self):
+        try:
+            self.socket.settimeout(0.0)
+            try:
+                recvd = self.socket.recv(4096, socket.MSG_DONTWAIT)
+            except socket.error as recv_e:
+                if recv_e.errno != errno.EWOULDBLOCK:
+                    raise
+                return
+
+            if recvd == b'':
+                raise socket.error(errno.EPIPE, "Broken pipe")
+        finally:
+            self.socket.settimeout(self.timeout)
+
     def _send_data(self, bytes_):
         # reconnect if possible
         self._reconnect()
         # send message
         bytes_to_send = len(bytes_)
         bytes_sent = 0
+        self._check_recv_side()
         while bytes_sent < bytes_to_send:
             sent = self.socket.send(bytes_[bytes_sent:])
             if sent == 0:
                 raise socket.error(errno.EPIPE, "Broken pipe")
             bytes_sent += sent
+        self._check_recv_side()
 
     def _reconnect(self):
         if not self.socket:

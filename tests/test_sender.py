@@ -218,8 +218,29 @@ class TestSender(unittest.TestCase):
             self.assertTrue(sender.socket)
 
             class FakeSocket:
+                def __init__(self):
+                    self.to = 123
+                    self.send_side_effects = [3, 0, 9]
+                    self.send_idx = 0
+                    self.recv_side_effects = [socket.error(errno.EWOULDBLOCK, "Blah"),
+                                              b"this data is going to be ignored",
+                                              b"",
+                                              socket.error(errno.EWOULDBLOCK, "Blah"),
+                                              socket.error(errno.EWOULDBLOCK, "Blah"),
+                                              socket.error(errno.EACCES, "This error will never happen"),
+                                              ]
+                    self.recv_idx = 0
+
                 def send(self, bytes_):
-                    return 0
+                    try:
+                        v = self.send_side_effects[self.send_idx]
+                        if isinstance(v, Exception):
+                            raise v
+                        if isinstance(v, type) and issubclass(v, Exception):
+                            raise v()
+                        return v
+                    finally:
+                        self.send_idx += 1
 
                 def shutdown(self, mode):
                     pass
@@ -227,11 +248,46 @@ class TestSender(unittest.TestCase):
                 def close(self):
                     pass
 
+                def settimeout(self, to):
+                    self.to = to
+
+                def gettimeout(self):
+                    return self.to
+
+                def recv(self, bufsize, flags):
+                    try:
+                        v = self.recv_side_effects[self.recv_idx]
+                        if isinstance(v, Exception):
+                            raise v
+                        if isinstance(v, type) and issubclass(v, Exception):
+                            raise v()
+                        return v
+                    finally:
+                        self.recv_idx += 1
+
             old_sock = self._sender.socket
-            self._sender.socket = FakeSocket()
+            sock = FakeSocket()
+
             try:
+                self._sender.socket = sock
+                sender.last_error = None
+                self.assertTrue(sender._send_internal(b"456"))
+                self.assertFalse(sender.last_error)
+
+                self._sender.socket = sock
+                sender.last_error = None
                 self.assertFalse(sender._send_internal(b"456"))
-                self.assertTrue(sender.last_error.errno, errno.EPIPE)
+                self.assertEqual(sender.last_error.errno, errno.EPIPE)
+
+                self._sender.socket = sock
+                sender.last_error = None
+                self.assertFalse(sender._send_internal(b"456"))
+                self.assertEqual(sender.last_error.errno, errno.EPIPE)
+
+                self._sender.socket = sock
+                sender.last_error = None
+                self.assertFalse(sender._send_internal(b"456"))
+                self.assertEqual(sender.last_error.errno, errno.EACCES)
             finally:
                 self._sender.socket = old_sock
 
