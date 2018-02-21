@@ -254,7 +254,7 @@ class TestSender(unittest.TestCase):
                 def gettimeout(self):
                     return self.to
 
-                def recv(self, bufsize, flags):
+                def recv(self, bufsize, flags=0):
                     try:
                         v = self.recv_side_effects[self.recv_idx]
                         if isinstance(v, Exception):

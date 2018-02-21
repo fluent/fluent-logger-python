@@ -170,7 +170,7 @@ class FluentSender(object):
         try:
             self.socket.settimeout(0.0)
             try:
-                recvd = self.socket.recv(4096, socket.MSG_DONTWAIT)
+                recvd = self.socket.recv(4096)
             except socket.error as recv_e:
                 if recv_e.errno != errno.EWOULDBLOCK:
                     raise
