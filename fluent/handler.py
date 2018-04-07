@@ -131,12 +131,12 @@ class FluentRecordFormatter(logging.Formatter, object):
             if isinstance(json_msg, dict):
                 return json_msg
             else:
-                return {'message': str(json_msg)}
+                return self._format_msg_default(record, msg)
         except ValueError:
             return self._format_msg_default(record, msg)
 
     def _format_msg_default(self, record, msg):
-        return {'message': record.getMessage()}
+        return {'message': super(FluentRecordFormatter, self).format(record)}
 
     def _format_by_exclusion(self, record):
         data = {}
