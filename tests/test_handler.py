@@ -350,3 +350,24 @@ class TestHandler(unittest.TestCase):
         data = self.get_data()
         # For some reason, non-string keys are ignored
         self.assertFalse(42 in data[0][2])
+
+    def test_exception_message(self):
+        handler = fluent.handler.FluentHandler('app.follow', port=self._port)
+
+        with handler:
+            logging.basicConfig(level=logging.INFO)
+            log = logging.getLogger('fluent.test')
+            handler.setFormatter(fluent.handler.FluentRecordFormatter())
+            log.addHandler(handler)
+            try:
+                raise Exception('sample exception')
+            except Exception:
+                log.exception('it failed')
+            log.removeHandler(handler)
+
+        data = self.get_data()
+        message = data[0][2]['message']
+        # Includes the logged message, as well as the stack trace.
+        self.assertTrue('it failed' in message)
+        self.assertTrue('tests/test_handler.py", line' in message)
+        self.assertTrue('Exception: sample exception' in message)
