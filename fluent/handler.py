@@ -192,17 +192,35 @@ class FluentHandler(logging.Handler):
                  **kwargs):
 
         self.tag = tag
-        self.sender = self.getSenderInstance(tag,
-                                             host=host, port=port,
-                                             timeout=timeout, verbose=verbose,
-                                             buffer_overflow_handler=buffer_overflow_handler,
-                                             msgpack_kwargs=msgpack_kwargs,
-                                             nanosecond_precision=nanosecond_precision,
-                                             **kwargs)
+        self._host = host
+        self._port = port
+        self._timeout = timeout
+        self._verbose = verbose
+        self._buffer_overflow_handler = buffer_overflow_handler
+        self._msgpack_kwargs = msgpack_kwargs
+        self._nanosecond_precision = nanosecond_precision
+        self._kwargs = kwargs
+        self._sender = None
         logging.Handler.__init__(self)
 
     def getSenderClass(self):
         return sender.FluentSender
+
+    @property
+    def sender(self):
+        if self._sender is None:
+            self._sender = self.getSenderInstance(
+                tag=self.tag,
+                host=self._host,
+                port=self._port,
+                timeout=self._timeout,
+                verbose=self._verbose,
+                buffer_overflow_handler=self._buffer_overflow_handler,
+                msgpack_kwargs=self._msgpack_kwargs,
+                nanosecond_precision=self._nanosecond_precision,
+                **self._kwargs
+            )
+        return self._sender
 
     def getSenderInstance(self, tag, host, port, timeout, verbose,
                           buffer_overflow_handler, msgpack_kwargs,
