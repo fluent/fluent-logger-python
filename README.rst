@@ -329,7 +329,7 @@ or for the python logging interface:
 
     logging.basicConfig(level=logging.INFO)
     l = logging.getLogger('fluent.test')
-    h = handler.FluentHandler('app.follow', host='host', port=24224, buffer_overflow_handler=overflow_handler)
+    h = handler.handler.FluentHandler('app.follow', host='host', port=24224, buffer_overflow_handler=overflow_handler)
     formatter = handler.FluentRecordFormatter(custom_format)
     h.setFormatter(formatter)
     l.addHandler(h)
