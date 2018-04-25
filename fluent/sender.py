@@ -121,17 +121,13 @@ class FluentSender(object):
 
             self._close()
             self.pendings = None
-            
-    def _host_is_ipv6(self) :
-      try :
-        socket.inet_pton(socket.AF_INET6, self.host)
-        return True
-      except :
-        try :
-          socket.inet_aton(self.host)
-          return False
-        except Exception as e:
-          raise e
+
+    def _is_ipv6_host(self):
+        try:
+            socket.getaddrinfo(self.host, None, socket.AF_INET6)
+            return True
+        except socket.error:
+            return False
 
     def _make_packet(self, label, timestamp, data):
         if label:
@@ -214,10 +210,12 @@ class FluentSender(object):
                     sock.settimeout(self.timeout)
                     sock.connect(self.host[len('unix://'):])
                 else:
-                    if self._host_is_ipv6() :
-                      sock = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
-                    else :
-                      sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    if self._host_is_ipv6():
+                        sock = socket.socket(socket.AF_INET6,
+                                             socket.SOCK_STREAM)
+                    else:
+                        sock = socket.socket(socket.AF_INET,
+                                             socket.SOCK_STREAM)
                     sock.settimeout(self.timeout)
                     # This might be controversial and may need to be removed
                     sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
