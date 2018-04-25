@@ -210,7 +210,7 @@ class FluentSender(object):
                     sock.settimeout(self.timeout)
                     sock.connect(self.host[len('unix://'):])
                 else:
-                    if self._host_is_ipv6():
+                    if self._is_ipv6_host():
                         sock = socket.socket(socket.AF_INET6,
                                              socket.SOCK_STREAM)
                     else:
