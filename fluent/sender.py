@@ -122,9 +122,9 @@ class FluentSender(object):
             self._close()
             self.pendings = None
 
-    def _is_ipv6_host(self):
+    def _is_ipv4_host(self):
         try:
-            socket.getaddrinfo(self.host, None, socket.AF_INET6)
+            socket.getaddrinfo(self.host, None, socket.AF_INET)
             return True
         except socket.error:
             return False
@@ -210,11 +210,11 @@ class FluentSender(object):
                     sock.settimeout(self.timeout)
                     sock.connect(self.host[len('unix://'):])
                 else:
-                    if self._is_ipv6_host():
-                        sock = socket.socket(socket.AF_INET6,
+                    if self._is_ipv4_host():
+                        sock = socket.socket(socket.AF_INET,
                                              socket.SOCK_STREAM)
                     else:
-                        sock = socket.socket(socket.AF_INET,
+                        sock = socket.socket(socket.AF_INET6,
                                              socket.SOCK_STREAM)
                     sock.settimeout(self.timeout)
                     # This might be controversial and may need to be removed
