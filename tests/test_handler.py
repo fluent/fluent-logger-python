@@ -371,3 +371,19 @@ class TestHandler(unittest.TestCase):
         self.assertTrue('it failed' in message)
         self.assertTrue('tests/test_handler.py", line' in message)
         self.assertTrue('Exception: sample exception' in message)
+
+    def test_extra_data(self):
+        handler = fluent.handler.FluentHandler('app.follow', port=self._port)
+
+        with handler:
+            logging.basicConfig(level=logging.INFO)
+            log = logging.getLogger('fluent.test')
+            handler.setFormatter(fluent.handler.FluentRecordFormatter())
+            log.addHandler(handler)
+            log.info("Sample log massage", extra={'user_id': 1})
+            log.removeHandler(handler)
+
+        data = self.get_data()
+        eq = self.assertEqual
+        eq("Sample log massage", data[0][2]['message'])
+        eq({'user_id': 1}, data[0][2]['extra'])

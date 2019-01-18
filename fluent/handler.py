@@ -77,6 +77,7 @@ class FluentRecordFormatter(logging.Formatter, object):
             else:
                 if hasattr(fmt, "__call__"):
                     self._formatter = fmt
+                    self._fmt_dict = None
                     self.usesTime = fmt.usesTime
                 else:
                     self._fmt_dict = fmt
@@ -101,8 +102,39 @@ class FluentRecordFormatter(logging.Formatter, object):
         # Apply format
         data = self._formatter(record)
 
+        # Add extra data
+        extra = self._get_extra_fields(record)
+        if extra:
+            data['extra'] = extra
+
         self._structuring(data, record)
         return data
+
+    def _get_extra_fields(self, record):
+        """
+        Method based on:
+        https://github.com/vklochan/python-logstash/blob/master/logstash/formatter.py#L23
+        """
+        # The list contains all the attributes listed in
+        # http://docs.python.org/library/logging.html#logrecord-attributes
+        skip_list = (
+            'args', 'asctime', 'created', 'exc_info', 'exc_text', 'filename',
+            'funcName', 'id', 'levelname', 'levelno', 'lineno', 'module',
+            'msecs', 'msecs', 'message', 'msg', 'name', 'pathname', 'process',
+            'processName', 'relativeCreated', 'stack_info', 'thread', 'threadName',
+            'extra', 'auth_token', 'password', 'hostname', )
+
+        easy_types = (str, bool, dict, float, int, list, type(None))
+
+        fields = {}
+        fmt_dict = self._fmt_dict or {}
+        for key, value in record.__dict__.items():
+            if key not in skip_list and key not in fmt_dict:
+                if isinstance(value, easy_types):
+                    fields[key] = value
+                else:
+                    fields[key] = repr(value)
+        return fields
 
     def usesTime(self):
         """This method is substituted on construction based on settings for performance reasons"""

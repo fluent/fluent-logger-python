@@ -209,6 +209,7 @@ module.
     })
     l.info('{"from": "userC", "to": "userD"}')
     l.info("This log entry will be logged with the additional key: 'message'.")
+    l.info("This log entry will be enriched with extra data.", extra={'user_id': 1})
 
 You can also customize formatter via logging.config.dictConfig
 
