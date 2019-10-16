@@ -5,15 +5,15 @@ python:
   - "3.4"
   - "3.5"
   - "3.6"
-  - 3.6-dev
-  - 3.7-dev
+  - "3.7"
+  - "3.8"
   - pypy
   - pypy3
   - nightly
 # command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
 install:
     - "pip install -e ."
-    - "pip install 'coverage>=3.7,<3.8' coveralls"
+    - "pip install 'coverage~=4.5.4' coveralls"
 script:
     - "PYTHONFAULTHANDLER=x timeout -sABRT 30s nosetests -vsd"
 after_success:
@@ -27,7 +27,7 @@ deploy:
     secure: CpNaj4F3TZvpP1aSJWidh/XexrWODV2sBdObrYU79Gyh9hFl6WLsA3JM9BfVsy9cGb/P/jP6ly4Z0/6qdIzZ5D6FPOB1B7rn5GZ2LAMOypRCA6W2uJbRjUU373Wut0p0OmQcMPto6XJsMlpvOEq+1uAq+LLAnAGEmmYTeskZebs=
   on:
     tags: true
-    condition: '"$TRAVIS_PYTHON_VERSION" = "3.6" || "$TRAVIS_PYTHON_VERSION" = "2.7"'
+    condition: '"$TRAVIS_PYTHON_VERSION" = "3.7" || "$TRAVIS_PYTHON_VERSION" = "2.7"'
   distributions: "sdist bdist_wheel"
 
 matrix:
