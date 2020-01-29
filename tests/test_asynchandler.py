@@ -4,6 +4,9 @@ import logging
 import sys
 import unittest
 
+from mock import patch
+from unittest import mock
+
 import fluent.asynchandler
 import fluent.handler
 from tests import mockserver
@@ -309,3 +312,52 @@ class TestHandlerWithCircularQueue(unittest.TestCase):
         eq('userB', el[2]['to'])
         self.assertTrue(el[1])
         self.assertTrue(isinstance(el[1], int))
+
+
+class QueueOverflowException(Exception):
+    pass
+
+
+def queue_overflow_handler(discarded_bytes):
+    raise QueueOverflowException(discarded_bytes)
+
+
+
+
+class TestHandlerWithCircularQueueHandler(unittest.TestCase):
+    Q_SIZE = 1
+
+    def setUp(self):
+        super(TestHandlerWithCircularQueueHandler, self).setUp()
+        self._server = mockserver.MockRecvServer('localhost')
+        self._port = self._server.port
+
+    def tearDown(self):
+        self._server.close()
+
+    def get_handler_class(self):
+        # return fluent.handler.FluentHandler
+        return fluent.asynchandler.FluentHandler
+
+    @patch.object(fluent.asynchandler.asyncsender.Queue, 'full', mock.Mock(return_value=True))
+    def test_simple(self):
+        handler = self.get_handler_class()('app.follow', port=self._port,
+                                           queue_maxsize=self.Q_SIZE,
+                                           queue_circular=True,
+                                           queue_overflow_handler=queue_overflow_handler)
+        with handler:
+            self.assertEqual(handler.sender.queue_circular, True)
+            self.assertEqual(handler.sender.queue_maxsize, self.Q_SIZE)
+
+            logging.basicConfig(level=logging.INFO)
+            log = logging.getLogger('fluent.test')
+            handler.setFormatter(fluent.handler.FluentRecordFormatter())
+            log.addHandler(handler)
+
+            log.info({'cnt': 1, 'from': 'userA', 'to': 'userB'})
+            with self.assertRaises(QueueOverflowException):
+                log.info({'cnt': 2, 'from': 'userA', 'to': 'userB'})
+            log.info({'cnt': 3, 'from': 'userA', 'to': 'userB'})
+            with self.assertRaises(QueueOverflowException):
+                log.info({'cnt': 4, 'from': 'userA', 'to': 'userB'})
+
