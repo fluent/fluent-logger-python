@@ -4,8 +4,16 @@ import logging
 import sys
 import unittest
 
-from mock import patch
-from unittest import mock
+try:
+    from unittest import mock
+except ImportError:
+    import mock
+try:
+    from unittest.mock import patch
+except ImportError:
+    from mock import patch
+
+
 
 import fluent.asynchandler
 import fluent.handler
@@ -322,8 +330,6 @@ def queue_overflow_handler(discarded_bytes):
     raise QueueOverflowException(discarded_bytes)
 
 
-
-
 class TestHandlerWithCircularQueueHandler(unittest.TestCase):
     Q_SIZE = 1
 
@@ -339,25 +345,30 @@ class TestHandlerWithCircularQueueHandler(unittest.TestCase):
         # return fluent.handler.FluentHandler
         return fluent.asynchandler.FluentHandler
 
-    @patch.object(fluent.asynchandler.asyncsender.Queue, 'full', mock.Mock(return_value=True))
     def test_simple(self):
         handler = self.get_handler_class()('app.follow', port=self._port,
                                            queue_maxsize=self.Q_SIZE,
                                            queue_circular=True,
                                            queue_overflow_handler=queue_overflow_handler)
         with handler:
-            self.assertEqual(handler.sender.queue_circular, True)
-            self.assertEqual(handler.sender.queue_maxsize, self.Q_SIZE)
+            def custom_full_queue():
+                handler.sender._queue.put(b'Mock', block=True)
+                return True
 
-            logging.basicConfig(level=logging.INFO)
-            log = logging.getLogger('fluent.test')
-            handler.setFormatter(fluent.handler.FluentRecordFormatter())
-            log.addHandler(handler)
+            with patch.object(fluent.asynchandler.asyncsender.Queue, 'full', mock.Mock(side_effect=custom_full_queue)):
+                self.assertEqual(handler.sender.queue_circular, True)
+                self.assertEqual(handler.sender.queue_maxsize, self.Q_SIZE)
 
-            log.info({'cnt': 1, 'from': 'userA', 'to': 'userB'})
-            with self.assertRaises(QueueOverflowException):
-                log.info({'cnt': 2, 'from': 'userA', 'to': 'userB'})
-            log.info({'cnt': 3, 'from': 'userA', 'to': 'userB'})
-            with self.assertRaises(QueueOverflowException):
-                log.info({'cnt': 4, 'from': 'userA', 'to': 'userB'})
+                logging.basicConfig(level=logging.INFO)
+                log = logging.getLogger('fluent.test')
+                handler.setFormatter(fluent.handler.FluentRecordFormatter())
+                log.addHandler(handler)
 
+                with self.assertRaises(QueueOverflowException):
+                    log.info({'cnt': 1, 'from': 'userA', 'to': 'userB'})
+
+                with self.assertRaises(QueueOverflowException):
+                    log.info({'cnt': 2, 'from': 'userA', 'to': 'userB'})
+
+                with self.assertRaises(QueueOverflowException):
+                    log.info({'cnt': 3, 'from': 'userA', 'to': 'userB'})
