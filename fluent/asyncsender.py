@@ -115,9 +115,10 @@ class FluentSender(sender.FluentSender):
                 # discard oldest
                 try:
                     discarded_bytes = self._queue.get(block=False)
-                    self._queue_overflow_handler(discarded_bytes)
                 except Empty:  # pragma: no cover
                     pass
+                else:
+                    self._queue_overflow_handler(discarded_bytes)
             try:
                 self._queue.put(bytes_, block=(not self._queue_circular))
             except Full:    # pragma: no cover
