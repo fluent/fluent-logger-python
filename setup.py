@@ -12,7 +12,7 @@ desc = 'A Python logging handler for Fluentd event collector'
 
 setup(
   name='fluent-logger',
-  version='0.9.5',
+  version='0.9.6',
   description=desc,
   long_description=open(README).read(),
   package_dir={'fluent': 'fluent'},
@@ -37,6 +37,6 @@ setup(
     'Topic :: System :: Logging',
     'Intended Audience :: Developers',
   ],
-  python_requires=">=2.7,!=3.0,!=3.1,!=3.2,!=3.3,<3.9",
+  python_requires=">=2.7,!=3.0,!=3.1,!=3.2,!=3.3",
   test_suite='tests'
 )
