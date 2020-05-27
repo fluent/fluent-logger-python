@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from fluent import asyncsender
-from fluent import handler
+from fluent import handler, asyncsender
 
 
 class FluentHandler(handler.FluentHandler):

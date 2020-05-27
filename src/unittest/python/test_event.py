@@ -2,11 +2,12 @@
 
 import unittest
 
-from fluent import event, sender
-from tests import mockserver
+from fluent import sender, event
+from src.unittest.python import mockserver
 
 
-class TestException(BaseException): pass
+class TestException(BaseException):
+    pass
 
 
 class TestEvent(unittest.TestCase):
@@ -15,7 +16,7 @@ class TestEvent(unittest.TestCase):
         sender.setup('app', port=self._server.port)
 
     def tearDown(self):
-        from fluent.sender import _set_global_sender
+        from fluent import _set_global_sender
         sender.close()
         _set_global_sender(None)
 

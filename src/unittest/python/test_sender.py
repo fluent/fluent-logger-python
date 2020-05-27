@@ -12,12 +12,12 @@ from tempfile import mkdtemp
 import msgpack
 
 import fluent.sender
-from tests import mockserver
+from src.unittest.python import mockserver
 
 
 class TestSetup(unittest.TestCase):
     def tearDown(self):
-        from fluent.sender import _set_global_sender
+        from fluent import _set_global_sender
         _set_global_sender(None)
 
     def test_no_kwargs(self):
