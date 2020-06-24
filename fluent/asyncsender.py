@@ -55,6 +55,7 @@ class FluentSender(sender.FluentSender):
                  msgpack_kwargs=None,
                  queue_maxsize=DEFAULT_QUEUE_MAXSIZE,
                  queue_circular=DEFAULT_QUEUE_CIRCULAR,
+                 queue_overflow_handler=None,
                  **kwargs):
         """
         :param kwargs: This kwargs argument is not used in __init__. This will be removed in the next major version.
@@ -66,6 +67,10 @@ class FluentSender(sender.FluentSender):
                                            **kwargs)
         self._queue_maxsize = queue_maxsize
         self._queue_circular = queue_circular
+        if queue_circular and queue_overflow_handler:
+            self._queue_overflow_handler = queue_overflow_handler
+        else:
+            self._queue_overflow_handler = self._queue_overflow_handler_default
 
         self._thread_guard = threading.Event()  # This ensures visibility across all variables
         self._closed = False
@@ -109,9 +114,11 @@ class FluentSender(sender.FluentSender):
             if self._queue_circular and self._queue.full():
                 # discard oldest
                 try:
-                    self._queue.get(block=False)
+                    discarded_bytes = self._queue.get(block=False)
                 except Empty:  # pragma: no cover
                     pass
+                else:
+                    self._queue_overflow_handler(discarded_bytes)
             try:
                 self._queue.put(bytes_, block=(not self._queue_circular))
             except Full:    # pragma: no cover
@@ -131,6 +138,9 @@ class FluentSender(sender.FluentSender):
                 send_internal(bytes_)
         finally:
             self._close()
+
+    def _queue_overflow_handler_default(self, discarded_bytes):
+        pass
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         self.close()

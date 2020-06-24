@@ -4,6 +4,17 @@ import logging
 import sys
 import unittest
 
+try:
+    from unittest import mock
+except ImportError:
+    import mock
+try:
+    from unittest.mock import patch
+except ImportError:
+    from mock import patch
+
+
+
 import fluent.asynchandler
 import fluent.handler
 from tests import mockserver
@@ -309,3 +320,68 @@ class TestHandlerWithCircularQueue(unittest.TestCase):
         eq('userB', el[2]['to'])
         self.assertTrue(el[1])
         self.assertTrue(isinstance(el[1], int))
+
+
+class QueueOverflowException(BaseException):
+    pass
+
+
+def queue_overflow_handler(discarded_bytes):
+    raise QueueOverflowException(discarded_bytes)
+
+
+class TestHandlerWithCircularQueueHandler(unittest.TestCase):
+    Q_SIZE = 1
+
+    def setUp(self):
+        super(TestHandlerWithCircularQueueHandler, self).setUp()
+        self._server = mockserver.MockRecvServer('localhost')
+        self._port = self._server.port
+
+    def tearDown(self):
+        self._server.close()
+
+    def get_handler_class(self):
+        # return fluent.handler.FluentHandler
+        return fluent.asynchandler.FluentHandler
+
+    def test_simple(self):
+        handler = self.get_handler_class()('app.follow', port=self._port,
+                                           queue_maxsize=self.Q_SIZE,
+                                           queue_circular=True,
+                                           queue_overflow_handler=queue_overflow_handler)
+        with handler:
+            def custom_full_queue():
+                handler.sender._queue.put(b'Mock', block=True)
+                return True
+
+            with patch.object(fluent.asynchandler.asyncsender.Queue, 'full', mock.Mock(side_effect=custom_full_queue)):
+                self.assertEqual(handler.sender.queue_circular, True)
+                self.assertEqual(handler.sender.queue_maxsize, self.Q_SIZE)
+
+                logging.basicConfig(level=logging.INFO)
+                log = logging.getLogger('fluent.test')
+                handler.setFormatter(fluent.handler.FluentRecordFormatter())
+                log.addHandler(handler)
+
+                exc_counter = 0
+
+                try:
+                    log.info({'cnt': 1, 'from': 'userA', 'to': 'userB'})
+                except QueueOverflowException:
+                    exc_counter += 1
+
+                try:
+                    log.info({'cnt': 2, 'from': 'userA', 'to': 'userB'})
+                except QueueOverflowException:
+                    exc_counter += 1
+
+                try:
+                    log.info({'cnt': 3, 'from': 'userA', 'to': 'userB'})
+                except QueueOverflowException:
+                    exc_counter += 1
+
+                # we can't be sure to have exception in every case due to multithreading,
+                # so we can test only for a cautelative condition here
+                print('Exception raised: {} (expected 3)'.format(exc_counter))
+                assert exc_counter >= 0
