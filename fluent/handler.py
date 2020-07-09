@@ -169,10 +169,10 @@ class FluentRecordFormatter(logging.Formatter, object):
         return any([value.find(search) >= 0 for value in self._fmt_dict.values()])
 
     @staticmethod
-    def _add_dic(data, dic):
+    def _add_dic(data, dic, nonevalues=['None','']):
         for key, value in dic.items():
             if isinstance(key, basestring):
-                data[str(key)] = value
+                data[str(key)] = None if value in nonevalues else value
 
 
 class FluentHandler(logging.Handler):

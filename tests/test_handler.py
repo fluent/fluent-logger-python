@@ -244,6 +244,28 @@ class TestHandler(unittest.TestCase):
         # field defaults to none if not in log record
         self.assertIsNone(data[0][2]['custom_field'])
 
+    def test_custom_field_convert_none_strings(self):
+        handler = fluent.handler.FluentHandler('app.follow', port=self._port)
+
+        logging.basicConfig(level=logging.INFO)
+        log = logging.getLogger('fluent.test')
+        handler.setFormatter(
+            fluent.handler.FluentRecordFormatter(fmt={
+                'name': '%(name)s',
+                }
+            )
+        )
+        log.addHandler(handler)
+        log.info({'name': 'None', 'sample':''})
+        log.removeHandler(handler)
+        handler.close()
+
+        data = self.get_data()
+        # field should be none
+        self.assertIsNone(data[0][2]['name'])
+        self.assertIsNone(data[0][2]['sample'])
+
+
     def test_json_encoded_message(self):
         handler = fluent.handler.FluentHandler('app.follow', port=self._port)
 
