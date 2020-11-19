@@ -68,7 +68,7 @@ class MockRecvServer(threading.Thread):
         self._buf.seek(0)
         # TODO: have to process string encoding properly. currently we assume
         # that all encoding is utf-8.
-        return list(Unpacker(self._buf, encoding='utf-8'))
+        return list(Unpacker(self._buf))
 
     def close(self):
 
