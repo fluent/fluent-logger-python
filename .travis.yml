@@ -1,13 +1,11 @@
 sudo: false
 language: python
 python:
-  - "2.7"
-  - "3.4"
   - "3.5"
   - "3.6"
   - "3.7"
   - "3.8"
-  - pypy
+  - "3.9"
   - pypy3
   - nightly
 # command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
@@ -27,7 +25,7 @@ deploy:
     secure: CpNaj4F3TZvpP1aSJWidh/XexrWODV2sBdObrYU79Gyh9hFl6WLsA3JM9BfVsy9cGb/P/jP6ly4Z0/6qdIzZ5D6FPOB1B7rn5GZ2LAMOypRCA6W2uJbRjUU373Wut0p0OmQcMPto6XJsMlpvOEq+1uAq+LLAnAGEmmYTeskZebs=
   on:
     tags: true
-    condition: '"$TRAVIS_PYTHON_VERSION" = "3.8" || "$TRAVIS_PYTHON_VERSION" = "2.7"'
+    condition: '"$TRAVIS_PYTHON_VERSION" = "3.9" || "$TRAVIS_PYTHON_VERSION" = "2.7"'
   distributions: "sdist bdist_wheel"
 
 matrix:
