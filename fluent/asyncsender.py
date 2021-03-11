@@ -1,13 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function
-
 import threading
-
-try:
-    from queue import Queue, Full, Empty
-except ImportError:
-    from Queue import Queue, Full, Empty
+from queue import Queue, Full, Empty
 
 from fluent import sender
 from fluent.sender import EventTime
@@ -121,8 +115,8 @@ class FluentSender(sender.FluentSender):
                     self._queue_overflow_handler(discarded_bytes)
             try:
                 self._queue.put(bytes_, block=(not self._queue_circular))
-            except Full:    # pragma: no cover
-                return False    # this actually can't happen
+            except Full:  # pragma: no cover
+                return False  # this actually can't happen
 
             return True
 

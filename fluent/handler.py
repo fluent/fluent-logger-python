@@ -9,11 +9,6 @@ try:
 except ImportError:  # pragma: no cover
     import json
 
-try:
-    basestring
-except NameError:  # pragma: no cover
-    basestring = (str, bytes)
-
 from fluent import sender
 
 
@@ -120,7 +115,7 @@ class FluentRecordFormatter(logging.Formatter, object):
 
         if isinstance(msg, dict):
             self._add_dic(data, msg)
-        elif isinstance(msg, basestring):
+        elif isinstance(msg, str):
             self._add_dic(data, self._format_msg(record, msg))
         else:
             self._add_dic(data, {'message': msg})
@@ -171,8 +166,8 @@ class FluentRecordFormatter(logging.Formatter, object):
     @staticmethod
     def _add_dic(data, dic):
         for key, value in dic.items():
-            if isinstance(key, basestring):
-                data[str(key)] = value
+            if isinstance(key, str):
+                data[key] = value
 
 
 class FluentHandler(logging.Handler):
