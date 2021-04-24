@@ -330,7 +330,6 @@ class TestSenderWithTimeoutMaxSizeNonCircular(unittest.TestCase):
 
 
 class TestSenderUnlimitedSize(unittest.TestCase):
-    Q_SIZE = 3
 
     def setUp(self):
         super(TestSenderUnlimitedSize, self).setUp()
@@ -374,3 +373,23 @@ class TestSenderUnlimitedSize(unittest.TestCase):
         eq(3, len(el))
         eq("test.foo{}".format(NUM), el[0])
         eq({'bar': "baz{}".format(NUM)}, el[2])
+
+
+class TestSenderSocketGaierror(unittest.TestCase):
+    def setUp(self):
+        super(TestSenderSocketGaierror, self).setUp()
+        self._sender = fluent.asyncsender.FluentSender(host="localhost_error",
+                                                       tag="test",
+                                                       discard_logs_on_reconnect_error=True)
+
+    def tearDown(self):
+        self._sender.close()
+
+    def test_simple(self):
+        with self._sender as sender:
+            for _ in range(100):
+                sender._queue.put(b"1")
+
+            sender._queue.put(fluent.asyncsender._TOMBSTONE)
+
+        self.assertEqual(self._sender._queue.qsize(), 0)
