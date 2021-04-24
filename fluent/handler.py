@@ -229,13 +229,17 @@ class FluentHandler(logging.Handler):
                             nanosecond_precision=nanosecond_precision, **kwargs)
 
     def emit(self, record):
-        data = self.format(record)
-        _sender = self.sender
-        return _sender.emit_with_time(None,
-                                      sender.EventTime(record.created)
-                                      if _sender.nanosecond_precision
-                                      else int(record.created),
-                                      data)
+        try:
+            data = self.format(record)
+            _sender = self.sender
+            return _sender.emit_with_time(None,
+                                          sender.EventTime(record.created)
+                                          if _sender.nanosecond_precision
+                                          else int(record.created),
+                                          data)
+        except Exception as e:
+            self.handleError(record)
+            raise e
 
     def close(self):
         self.acquire()
