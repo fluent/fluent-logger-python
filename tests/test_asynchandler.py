@@ -13,8 +13,6 @@ try:
 except ImportError:
     from mock import patch
 
-
-
 import fluent.asynchandler
 import fluent.handler
 from tests import mockserver

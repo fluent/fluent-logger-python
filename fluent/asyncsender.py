@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import socket
 import threading
 from queue import Queue, Full, Empty
 
@@ -50,9 +51,11 @@ class FluentSender(sender.FluentSender):
                  queue_maxsize=DEFAULT_QUEUE_MAXSIZE,
                  queue_circular=DEFAULT_QUEUE_CIRCULAR,
                  queue_overflow_handler=None,
+                 discard_logs_on_reconnect_error=False,
                  **kwargs):
         """
         :param kwargs: This kwargs argument is not used in __init__. This will be removed in the next major version.
+        :discard_logs_on_reconnect_error: When set to true, will discard logs when reconnect error is reported.
         """
         super(FluentSender, self).__init__(tag=tag, host=host, port=port, bufmax=bufmax, timeout=timeout,
                                            verbose=verbose, buffer_overflow_handler=buffer_overflow_handler,
@@ -65,6 +68,8 @@ class FluentSender(sender.FluentSender):
             self._queue_overflow_handler = queue_overflow_handler
         else:
             self._queue_overflow_handler = self._queue_overflow_handler_default
+
+        self._discard_logs_on_reconnect_error = discard_logs_on_reconnect_error
 
         self._thread_guard = threading.Event()  # This ensures visibility across all variables
         self._closed = False
@@ -81,11 +86,7 @@ class FluentSender(sender.FluentSender):
                 return
             self._closed = True
             if not flush:
-                while True:
-                    try:
-                        self._queue.get(block=False)
-                    except Empty:
-                        break
+                self._clear_queue()
             self._queue.put(_TOMBSTONE)
             self._send_thread.join()
 
@@ -100,6 +101,13 @@ class FluentSender(sender.FluentSender):
     @property
     def queue_circular(self):
         return self._queue_circular
+
+    def _clear_queue(self):
+        while True:
+            try:
+                self._queue.get(block=False)
+            except Empty:
+                break
 
     def _send(self, bytes_):
         with self.lock:
@@ -120,8 +128,20 @@ class FluentSender(sender.FluentSender):
 
             return True
 
+    def _send_internal(self, bytes_):
+        send_internal_result = super(FluentSender, self)._send_internal(bytes_)
+        if send_internal_result is False:
+            # when send_result is False, super() caught socket.error
+            # and assigned the error to self.last_error
+            if self._discard_logs_on_reconnect_error is True and isinstance(self.last_error, socket.gaierror):
+                # clear the queue to avoid blocking and print the log
+                self._clear_queue()
+                print("%s. Please check address: (%s, %s)" % (str(self.last_error), self.host, self.port))
+
+        return send_internal_result
+
     def _send_loop(self):
-        send_internal = super(FluentSender, self)._send_internal
+        send_internal = self._send_internal
 
         try:
             while True:
