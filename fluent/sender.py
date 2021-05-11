@@ -197,8 +197,13 @@ class FluentSender(object):
             self.socket.settimeout(self.timeout)
 
     def _send_data(self, bytes_):
-        # reconnect if possible
-        self._reconnect()
+        try:
+            # reconnect if possible
+            self._reconnect()
+        except Exception as e:
+            # try once more but redetermine v4/v6 capability
+            self.ip_addr_family = None
+            self._reconnect()
         # send message
         bytes_to_send = len(bytes_)
         bytes_sent = 0

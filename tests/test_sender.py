@@ -311,6 +311,20 @@ class TestSender(unittest.TestCase):
             self.assertEqual(len(data), 1)
             self.assertEqual(data[0][2], {'bar': 'baz'})
 
+    def test_ipv6_disappeared(self):
+        sender = fluent.sender.FluentSender(tag='test',
+                                            host='127.0.0.1',
+                                            port=self._server.port,
+                                            prefer_ipv6=True)
+        # here we cause sender to believe it already determined IPv6, but want
+        # it to re-test when IPv6 stops working
+        sender.ip_addr_family = socket.AF_INET6
+        sender.emit('foo', {'bar': 'baz'})
+        sender._close()
+        data = self.get_data()
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0][2], {'bar': 'baz'})
+
     def test_ipv6_only(self):
         # Test if our host supports IPv6 before running this test
         try:
