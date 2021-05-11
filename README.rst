@@ -80,6 +80,14 @@ can also specify remote logger by passing the options.
     # for remote fluent
     logger = sender.FluentSender('app', host='host', port=24224)
 
+The logger will prefer using IPv4 and fall back to IPv6 by default. Should you wish to prefer
+IPv6 and fall back to IPv4, specify `prefer_ipv6` option as `True`.
+
+.. code:: python
+
+    # for remote fluent preferring IPv6, falling back to IPv4
+    logger = sender.FluentSender('app', host='host', port=24224, prefer_ipv6=True)
+
 For sending event, call `emit` method with your event. Following example will send the event to
 fluentd, with tag 'app.follow' and the attributes 'from' and 'to'.
 

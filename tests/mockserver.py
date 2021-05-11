@@ -16,7 +16,7 @@ class MockRecvServer(threading.Thread):
     Single threaded server accepts one connection and recv until EOF.
     """
 
-    def __init__(self, host='localhost', port=0):
+    def __init__(self, host='localhost', port=0, inet_family=socket.AF_INET):
         super(MockRecvServer, self).__init__()
 
         if host.startswith('unix://'):
@@ -24,13 +24,13 @@ class MockRecvServer(threading.Thread):
             self.socket_type = socket.SOCK_STREAM
             self.socket_addr = host[len('unix://'):]
         else:
-            self.socket_proto = socket.AF_INET
+            self.socket_proto = inet_family
             self.socket_type = socket.SOCK_STREAM
             self.socket_addr = (host, port)
 
         self._sock = socket.socket(self.socket_proto, self.socket_type)
         self._sock.bind(self.socket_addr)
-        if self.socket_proto == socket.AF_INET:
+        if self.socket_proto == inet_family:
             self.port = self._sock.getsockname()[1]
 
         self._sock.listen(1)
@@ -76,7 +76,7 @@ class MockRecvServer(threading.Thread):
             pass
 
         try:
-            conn = socket.socket(socket.AF_INET,
+            conn = socket.socket(self.socket_proto,
                                  socket.SOCK_STREAM)
             try:
                 conn.connect((self.socket_addr[0], self.port))
