@@ -292,6 +292,25 @@ class TestSender(unittest.TestCase):
             finally:
                 self._sender.socket = old_sock
 
+    def test_ipv6_preferred_but_not_avail(self):
+        real_getaddrinfo = socket.getaddrinfo
+
+        def _fake_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
+            if family == socket.AF_INET6:
+                raise socket.gaierror("mock: IPv4 Only")
+            else:
+                return real_getaddrinfo(host, port, family, type, proto, flags)
+        with patch('socket.getaddrinfo', side_effect=_fake_getaddrinfo):
+            sender = fluent.sender.FluentSender(tag='test',
+                                                host='localhost',
+                                                port=self._server.port,
+                                                prefer_ipv6=True)
+            sender.emit('foo', {'bar': 'baz'})
+            sender._close()
+            data = self.get_data()
+            self.assertEqual(len(data), 1)
+            self.assertEqual(data[0][2], {'bar': 'baz'})
+
     def test_ipv6_only(self):
         # Test if our host supports IPv6 before running this test
         try:
@@ -322,6 +341,39 @@ class TestSender(unittest.TestCase):
             data = self.get_data()
             self.assertEqual(len(data), 1)
             self.assertEqual(data[0][2], {'bar': 'baz'})
+
+    def test_ipv6_preferred(self):
+        # Test if our host supports IPv6 before running this test
+        try:
+            socket.gethostbyaddr('::1')
+        except socket.herror:
+            self.skipTest("Host does not support IPv6, cannot run this test")
+
+        self.tearDown()
+
+        real_getaddrinfo = socket.getaddrinfo
+
+        def _fake_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
+            if family == socket.AF_INET:
+                raise socket.gaierror("mock: IPv6 Only")
+            else:
+                return real_getaddrinfo(host, port, family, type, proto, flags)
+
+        self._server = mockserver.MockRecvServer(host='localhost',
+                                                 inet_family=socket.AF_INET6)
+
+
+        with patch('socket.getaddrinfo', side_effect=_fake_getaddrinfo):
+            sender = fluent.sender.FluentSender(tag='test',
+                                                host='localhost',
+                                                port=self._server.port,
+                                                prefer_ipv6=True)
+            sender.emit('foo', {'bar': 'baz'})
+            sender._close()
+            data = self.get_data()
+            self.assertEqual(len(data), 1)
+            self.assertEqual(data[0][2], {'bar': 'baz'})
+
 
     @unittest.skipIf(sys.platform == "win32", "Unix socket not supported")
     def test_unix_socket(self):

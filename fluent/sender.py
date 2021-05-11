@@ -54,6 +54,7 @@ class FluentSender(object):
                  buffer_overflow_handler=None,
                  nanosecond_precision=False,
                  msgpack_kwargs=None,
+                 prefer_ipv6=False,
                  **kwargs):
         """
         :param kwargs: This kwargs argument is not used in __init__. This will be removed in the next major version.
@@ -69,6 +70,8 @@ class FluentSender(object):
         self.msgpack_kwargs = {} if msgpack_kwargs is None else msgpack_kwargs
 
         self.socket = None
+        self.prefer_ipv6 = prefer_ipv6
+        self.ip_addr_family = None
         self.pendings = None
         self.lock = threading.Lock()
         self._closed = False
@@ -120,12 +123,19 @@ class FluentSender(object):
             self._close()
             self.pendings = None
 
-    def _is_ipv4_host(self):
-        try:
-            socket.getaddrinfo(self.host, None, socket.AF_INET)
-            return True
-        except socket.error:
-            return False
+    def _find_ip_addr_family(self):
+        if not self.prefer_ipv6:
+            try:
+                socket.getaddrinfo(self.host, None, socket.AF_INET)
+                return socket.AF_INET
+            except socket.error:
+                return socket.AF_INET6
+        else:
+            try:
+                socket.getaddrinfo(self.host, None, socket.AF_INET6)
+                return socket.AF_INET6
+            except socket.error:
+                return socket.AF_INET
 
     def _make_packet(self, label, timestamp, data):
         if label:
@@ -208,12 +218,10 @@ class FluentSender(object):
                     sock.settimeout(self.timeout)
                     sock.connect(self.host[len('unix://'):])
                 else:
-                    if self._is_ipv4_host():
-                        sock = socket.socket(socket.AF_INET,
-                                             socket.SOCK_STREAM)
-                    else:
-                        sock = socket.socket(socket.AF_INET6,
-                                             socket.SOCK_STREAM)
+                    if not self.ip_addr_family:
+                        self.ip_addr_family = self._find_ip_addr_family()
+                    sock = socket.socket(self.ip_addr_family,
+                                         socket.SOCK_STREAM)
                     sock.settimeout(self.timeout)
                     # This might be controversial and may need to be removed
                     sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
