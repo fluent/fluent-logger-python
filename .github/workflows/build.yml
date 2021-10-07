@@ -1,0 +1,51 @@
+name: fluent-logger
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+jobs:
+  build-stable:
+    runs-on: ${{ matrix.os }}
+    continue-on-error: false
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+          - macosx-latest
+        python-version:
+          - '3.10'
+          - '3.9'
+          - '3.8'
+          - '3.7'
+          - '3.6'
+          - 'pypy-3.7'
+    env:
+      DEPLOY_PYTHONS: "3.9"
+      DEPLOY_OSES: "Linux"
+      TWINE_USERNAME: __token__
+      TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - shell: bash
+        if: |
+          github.event_name == 'push' &&
+          contains(env.DEPLOY_OSES, runner.os) &&
+          contains(env.DEPLOY_PYTHONS, matrix.python-version)
+        run: |
+          echo "PYB_EXTRA_ARGS=+upload" >> $GITHUB_ENV
+      - uses: pybuilder/build@master
+        with:
+          python-version: ${{ matrix.python-version }}
+          pyb-extra-args: ${{ env.PYB_EXTRA_ARGS }}
+  build-stable-summary:
+    if: success() || failure()
+    runs-on: ubuntu-latest
+    name: Build Stable Summary
+    needs: build-stable
+    steps:
+      - name: Check build matrix status
+        if: needs.build-stable.result != 'success'
+        run: exit 1

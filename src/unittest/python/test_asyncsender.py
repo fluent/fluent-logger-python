@@ -8,7 +8,7 @@ import unittest
 import msgpack
 
 import fluent.asyncsender
-from tests import mockserver
+from src.unittest.python import mockserver
 
 
 class TestSetup(unittest.TestCase):
