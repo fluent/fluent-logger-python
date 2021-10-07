@@ -9,4 +9,7 @@
 /.tox
 /build
 /dist
-.idea/
+/.idea
+/.pybuilder
+__pycache__
+/target
