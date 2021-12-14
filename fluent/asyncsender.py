@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 
+import asyncio
 import threading
 from queue import Queue, Full, Empty
+import time
+import traceback
 
 from fluent import sender
 from fluent.sender import EventTime
@@ -75,19 +78,54 @@ class FluentSender(sender.FluentSender):
         self._send_thread.daemon = True
         self._send_thread.start()
 
-    def close(self, flush=True):
-        with self.lock:
-            if self._closed:
-                return
-            self._closed = True
-            if not flush:
-                while True:
-                    try:
-                        self._queue.get(block=False)
-                    except Empty:
-                        break
-            self._queue.put(_TOMBSTONE)
-            self._send_thread.join()
+    async def __aenter__(self):
+        return self
+
+    async def __aexit__(self, typ, value, traceback):
+        try:
+            await self.close()
+        except Exception as e:  # pragma: no cover
+            self.last_error = e
+
+    async def _reconnect(self):
+        if not self.socket:
+            try:
+                if self.host.startswith('unix://'):
+                    reader, writer = await asyncio.open_connection(host=self.host[len('unix://'):], port=self.port)
+                else:
+                    reader, writer = await asyncio.open_connection(host=self.host, port=self.port)
+            except Exception as e:
+                try:
+                    writer.close()
+                except Exception:  # pragma: no cover
+                    pass
+                raise e
+            else:
+                self.socket = writer
+
+    async def emit(self, label, data):
+        if self.nanosecond_precision:
+            cur_time = EventTime(time.time())
+        else:
+            cur_time = int(time.time())
+        return await self.emit_with_time(label, cur_time, data)
+
+    async def emit_with_time(self, label, timestamp, data):
+        if self.nanosecond_precision and isinstance(timestamp, float):
+            timestamp = EventTime(timestamp)
+        try:
+            bytes_ = self._make_packet(label, timestamp, data)
+        except Exception as e:
+            self.last_error = e
+            bytes_ = self._make_packet(label, timestamp,
+                                       {"level": "CRITICAL",
+                                        "message": "Can't output to log",
+                                        "traceback": traceback.format_exc()})
+        return await self._send(bytes_)
+
+    async def close(self, flush=True):
+        if self.socket:
+            self.socket.close()
 
     @property
     def queue_maxsize(self):
@@ -101,24 +139,11 @@ class FluentSender(sender.FluentSender):
     def queue_circular(self):
         return self._queue_circular
 
-    def _send(self, bytes_):
-        with self.lock:
-            if self._closed:
-                return False
-            if self._queue_circular and self._queue.full():
-                # discard oldest
-                try:
-                    discarded_bytes = self._queue.get(block=False)
-                except Empty:  # pragma: no cover
-                    pass
-                else:
-                    self._queue_overflow_handler(discarded_bytes)
-            try:
-                self._queue.put(bytes_, block=(not self._queue_circular))
-            except Full:  # pragma: no cover
-                return False  # this actually can't happen
-
-            return True
+    async def _send(self, bytes_):
+        await self._reconnect()
+        self.socket.write(bytes_)
+        await self.socket.drain()
+        return True
 
     def _send_loop(self):
         send_internal = super(FluentSender, self)._send_internal
@@ -135,6 +160,3 @@ class FluentSender(sender.FluentSender):
 
     def _queue_overflow_handler_default(self, discarded_bytes):
         pass
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.close()
