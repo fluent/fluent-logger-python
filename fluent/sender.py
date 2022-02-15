@@ -122,7 +122,7 @@ class FluentSender(object):
 
     def _make_packet(self, label, timestamp, data):
         if label:
-            tag = '.'.join((self.tag, label))
+            tag = '.'.join((self.tag, label)) if self.tag else label
         else:
             tag = self.tag
         packet = (tag, timestamp, data)
