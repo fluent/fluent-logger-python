@@ -9,6 +9,8 @@ import traceback
 
 import msgpack
 
+import ipaddress
+
 _global_sender = None
 
 
@@ -201,7 +203,8 @@ class FluentSender(object):
                     sock.settimeout(self.timeout)
                     sock.connect(self.host[len('unix://'):])
                 else:
-                    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    family = socket.AF_INET6 if self.is_host_ipv6() else socket.AF_INET
+                    sock = socket.socket(family, socket.SOCK_STREAM)
                     sock.settimeout(self.timeout)
                     # This might be controversial and may need to be removed
                     sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
@@ -214,6 +217,16 @@ class FluentSender(object):
                 raise e
             else:
                 self.socket = sock
+
+    def is_host_ipv6(self):
+        """
+        check if IPv6 address and if yes - return True otherwise return False
+        """
+        try:
+            ipaddress.IPv6Address(str(self.host))
+        except:
+            return False
+        return True
 
     def _call_buffer_overflow_handler(self, pending_events):
         try:
