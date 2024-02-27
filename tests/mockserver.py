@@ -92,6 +92,3 @@ class MockRecvServer(threading.Thread):
                 pass
 
         self.join()
-
-    def __del__(self):
-        self.close()

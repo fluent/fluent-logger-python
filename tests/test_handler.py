@@ -13,9 +13,11 @@ class TestHandler(unittest.TestCase):
         super(TestHandler, self).setUp()
         self._server = mockserver.MockRecvServer('localhost')
         self._port = self._server.port
+        logging.getLogger().setLevel(logging.INFO)
 
     def tearDown(self):
         self._server.close()
+        self._server = None
 
     def get_data(self):
         return self._server.get_received()
@@ -24,7 +26,6 @@ class TestHandler(unittest.TestCase):
         handler = fluent.handler.FluentHandler('app.follow', port=self._port)
 
         with handler:
-            logging.basicConfig(level=logging.INFO)
             log = logging.getLogger('fluent.test')
             handler.setFormatter(fluent.handler.FluentRecordFormatter())
             log.addHandler(handler)
@@ -50,7 +51,6 @@ class TestHandler(unittest.TestCase):
         handler = fluent.handler.FluentHandler('app.follow', port=self._port)
 
         with handler:
-            logging.basicConfig(level=logging.INFO)
             log = logging.getLogger('fluent.test')
             handler.setFormatter(
                 fluent.handler.FluentRecordFormatter(fmt={
@@ -73,7 +73,6 @@ class TestHandler(unittest.TestCase):
         handler = fluent.handler.FluentHandler('app.follow', port=self._port)
 
         with handler:
-            logging.basicConfig(level=logging.INFO)
             log = logging.getLogger('fluent.test')
             handler.setFormatter(
                 fluent.handler.FluentRecordFormatter(exclude_attrs=[])
@@ -91,7 +90,6 @@ class TestHandler(unittest.TestCase):
         handler = fluent.handler.FluentHandler('app.follow', port=self._port)
 
         with handler:
-            logging.basicConfig(level=logging.INFO)
             log = logging.getLogger('fluent.test')
             handler.setFormatter(
                 fluent.handler.FluentRecordFormatter(exclude_attrs=["funcName"])
@@ -109,7 +107,6 @@ class TestHandler(unittest.TestCase):
         handler = fluent.handler.FluentHandler('app.follow', port=self._port)
 
         with handler:
-            logging.basicConfig(level=logging.INFO)
             log = logging.getLogger('fluent.test')
             handler.setFormatter(
                 fluent.handler.FluentRecordFormatter(exclude_attrs=[])
@@ -138,7 +135,6 @@ class TestHandler(unittest.TestCase):
         handler = fluent.handler.FluentHandler('app.follow', port=self._port)
 
         with handler:
-            logging.basicConfig(level=logging.INFO)
             log = logging.getLogger('fluent.test')
             handler.setFormatter(
                 fluent.handler.FluentRecordFormatter(fmt=formatter)
@@ -157,7 +153,6 @@ class TestHandler(unittest.TestCase):
         handler = fluent.handler.FluentHandler('app.follow', port=self._port)
 
         with handler:
-            logging.basicConfig(level=logging.INFO)
             log = logging.getLogger('fluent.test')
             handler.setFormatter(
                 fluent.handler.FluentRecordFormatter(fmt={
@@ -181,7 +176,6 @@ class TestHandler(unittest.TestCase):
         handler = fluent.handler.FluentHandler('app.follow', port=self._port)
 
         with handler:
-            logging.basicConfig(level=logging.INFO)
             log = logging.getLogger('fluent.test')
             handler.setFormatter(
                 fluent.handler.FluentRecordFormatter(fmt={
@@ -204,7 +198,6 @@ class TestHandler(unittest.TestCase):
         handler = fluent.handler.FluentHandler('app.follow', port=self._port)
 
         with handler:
-            logging.basicConfig(level=logging.INFO)
             log = logging.getLogger('fluent.test')
             handler.setFormatter(
                 fluent.handler.FluentRecordFormatter(fmt={
@@ -223,7 +216,6 @@ class TestHandler(unittest.TestCase):
         handler = fluent.handler.FluentHandler('app.follow', port=self._port)
 
         with handler:
-            logging.basicConfig(level=logging.INFO)
             log = logging.getLogger('fluent.test')
             handler.setFormatter(
                 fluent.handler.FluentRecordFormatter(fmt={
@@ -248,7 +240,6 @@ class TestHandler(unittest.TestCase):
         handler = fluent.handler.FluentHandler('app.follow', port=self._port)
 
         with handler:
-            logging.basicConfig(level=logging.INFO)
             log = logging.getLogger('fluent.test')
             handler.setFormatter(fluent.handler.FluentRecordFormatter())
             log.addHandler(handler)
@@ -265,7 +256,6 @@ class TestHandler(unittest.TestCase):
         handler = fluent.handler.FluentHandler('app.follow', port=self._port)
 
         with handler:
-            logging.basicConfig(level=logging.INFO)
             log = logging.getLogger('fluent.test')
             handler.setFormatter(fluent.handler.FluentRecordFormatter(format_json=False))
             log.addHandler(handler)
@@ -282,7 +272,6 @@ class TestHandler(unittest.TestCase):
         handler = fluent.handler.FluentHandler('app.follow', port=self._port)
 
         with handler:
-            logging.basicConfig(level=logging.INFO)
             log = logging.getLogger('fluent.test')
             handler.setFormatter(fluent.handler.FluentRecordFormatter())
             log.addHandler(handler)
@@ -297,7 +286,6 @@ class TestHandler(unittest.TestCase):
         handler = fluent.handler.FluentHandler('app.follow', port=self._port)
 
         with handler:
-            logging.basicConfig(level=logging.INFO)
             log = logging.getLogger('fluent.test')
             handler.setFormatter(fluent.handler.FluentRecordFormatter())
             log.addHandler(handler)
@@ -312,7 +300,6 @@ class TestHandler(unittest.TestCase):
         handler = fluent.handler.FluentHandler('app.follow', port=self._port)
 
         with handler:
-            logging.basicConfig(level=logging.INFO)
             log = logging.getLogger('fluent.test')
             handler.setFormatter(fluent.handler.FluentRecordFormatter())
             log.addHandler(handler)
@@ -326,7 +313,6 @@ class TestHandler(unittest.TestCase):
         handler = fluent.handler.FluentHandler('app.follow', port=self._port)
 
         with handler:
-            logging.basicConfig(level=logging.INFO)
             log = logging.getLogger('fluent.test')
             handler.setFormatter(fluent.handler.FluentRecordFormatter())
             log.addHandler(handler)
@@ -340,7 +326,6 @@ class TestHandler(unittest.TestCase):
         handler = fluent.handler.FluentHandler('app.follow', port=self._port)
 
         with handler:
-            logging.basicConfig(level=logging.INFO)
             log = logging.getLogger('fluent.test')
             handler.setFormatter(fluent.handler.FluentRecordFormatter())
             log.addHandler(handler)
@@ -355,7 +340,6 @@ class TestHandler(unittest.TestCase):
         handler = fluent.handler.FluentHandler('app.follow', port=self._port)
 
         with handler:
-            logging.basicConfig(level=logging.INFO)
             log = logging.getLogger('fluent.test')
             handler.setFormatter(fluent.handler.FluentRecordFormatter())
             log.addHandler(handler)

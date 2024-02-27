@@ -6,7 +6,8 @@ from fluent import event, sender
 from tests import mockserver
 
 
-class TestException(BaseException): pass
+class TestException(BaseException):
+    __test__ = False
 
 
 class TestEvent(unittest.TestCase):

@@ -25,9 +25,11 @@ class TestHandler(unittest.TestCase):
         super(TestHandler, self).setUp()
         self._server = mockserver.MockRecvServer('localhost')
         self._port = self._server.port
+        logging.getLogger().setLevel(logging.INFO)
 
     def tearDown(self):
         self._server.close()
+        self._server = None
 
     def get_handler_class(self):
         # return fluent.handler.FluentHandler
@@ -40,7 +42,6 @@ class TestHandler(unittest.TestCase):
         handler = self.get_handler_class()('app.follow', port=self._port)
 
         with handler:
-            logging.basicConfig(level=logging.INFO)
             log = logging.getLogger('fluent.test')
             handler.setFormatter(fluent.handler.FluentRecordFormatter())
             log.addHandler(handler)
@@ -63,7 +64,6 @@ class TestHandler(unittest.TestCase):
         handler = self.get_handler_class()('app.follow', port=self._port)
 
         with handler:
-            logging.basicConfig(level=logging.INFO)
             log = logging.getLogger('fluent.test')
             handler.setFormatter(
                 fluent.handler.FluentRecordFormatter(fmt={
@@ -86,7 +86,6 @@ class TestHandler(unittest.TestCase):
         handler = self.get_handler_class()('app.follow', port=self._port)
 
         with handler:
-            logging.basicConfig(level=logging.INFO)
             log = logging.getLogger('fluent.test')
             handler.setFormatter(
                 fluent.handler.FluentRecordFormatter(fmt={
@@ -109,7 +108,6 @@ class TestHandler(unittest.TestCase):
         handler = self.get_handler_class()('app.follow', port=self._port)
 
         with handler:
-            logging.basicConfig(level=logging.INFO)
             log = logging.getLogger('fluent.test')
             handler.setFormatter(
                 fluent.handler.FluentRecordFormatter(fmt={
@@ -131,7 +129,6 @@ class TestHandler(unittest.TestCase):
         handler = self.get_handler_class()('app.follow', port=self._port)
 
         with handler:
-            logging.basicConfig(level=logging.INFO)
             log = logging.getLogger('fluent.test')
             handler.setFormatter(
                 fluent.handler.FluentRecordFormatter(fmt={
@@ -147,7 +144,6 @@ class TestHandler(unittest.TestCase):
     def test_custom_field_fill_missing_fmt_key_is_true(self):
         handler = self.get_handler_class()('app.follow', port=self._port)
         with handler:
-            logging.basicConfig(level=logging.INFO)
             log = logging.getLogger('fluent.test')
             handler.setFormatter(
                 fluent.handler.FluentRecordFormatter(fmt={
@@ -172,7 +168,6 @@ class TestHandler(unittest.TestCase):
         handler = self.get_handler_class()('app.follow', port=self._port)
 
         with handler:
-            logging.basicConfig(level=logging.INFO)
             log = logging.getLogger('fluent.test')
             handler.setFormatter(fluent.handler.FluentRecordFormatter())
             log.addHandler(handler)
@@ -186,7 +181,6 @@ class TestHandler(unittest.TestCase):
         handler = self.get_handler_class()('app.follow', port=self._port)
 
         with handler:
-            logging.basicConfig(level=logging.INFO)
             log = logging.getLogger('fluent.test')
             handler.setFormatter(fluent.handler.FluentRecordFormatter())
             log.addHandler(handler)
@@ -200,7 +194,6 @@ class TestHandler(unittest.TestCase):
         handler = self.get_handler_class()('app.follow', port=self._port)
 
         with handler:
-            logging.basicConfig(level=logging.INFO)
             log = logging.getLogger('fluent.test')
             handler.setFormatter(fluent.handler.FluentRecordFormatter())
             log.addHandler(handler)
@@ -214,7 +207,6 @@ class TestHandler(unittest.TestCase):
         handler = self.get_handler_class()('app.follow', port=self._port)
 
         with handler:
-            logging.basicConfig(level=logging.INFO)
             log = logging.getLogger('fluent.test')
             handler.setFormatter(fluent.handler.FluentRecordFormatter())
             log.addHandler(handler)
@@ -227,7 +219,6 @@ class TestHandler(unittest.TestCase):
         handler = self.get_handler_class()('app.follow', port=self._port)
 
         with handler:
-            logging.basicConfig(level=logging.INFO)
             log = logging.getLogger('fluent.test')
             handler.setFormatter(fluent.handler.FluentRecordFormatter())
             log.addHandler(handler)
@@ -240,7 +231,6 @@ class TestHandler(unittest.TestCase):
         handler = self.get_handler_class()('app.follow', port=self._port)
 
         with handler:
-            logging.basicConfig(level=logging.INFO)
             log = logging.getLogger('fluent.test')
             handler.setFormatter(fluent.handler.FluentRecordFormatter())
             log.addHandler(handler)
@@ -254,7 +244,6 @@ class TestHandler(unittest.TestCase):
         handler = self.get_handler_class()('app.follow', port=self._port)
 
         with handler:
-            logging.basicConfig(level=logging.INFO)
             log = logging.getLogger('fluent.test')
             handler.setFormatter(fluent.handler.FluentRecordFormatter())
             log.addHandler(handler)
@@ -297,7 +286,6 @@ class TestHandlerWithCircularQueue(unittest.TestCase):
             self.assertEqual(handler.sender.queue_circular, True)
             self.assertEqual(handler.sender.queue_maxsize, self.Q_SIZE)
 
-            logging.basicConfig(level=logging.INFO)
             log = logging.getLogger('fluent.test')
             handler.setFormatter(fluent.handler.FluentRecordFormatter())
             log.addHandler(handler)
@@ -359,7 +347,6 @@ class TestHandlerWithCircularQueueHandler(unittest.TestCase):
                 self.assertEqual(handler.sender.queue_circular, True)
                 self.assertEqual(handler.sender.queue_maxsize, self.Q_SIZE)
 
-                logging.basicConfig(level=logging.INFO)
                 log = logging.getLogger('fluent.test')
                 handler.setFormatter(fluent.handler.FluentRecordFormatter())
                 log.addHandler(handler)
