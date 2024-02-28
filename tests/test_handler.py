@@ -1,5 +1,3 @@
-#  -*- coding: utf-8 -*-
-
 import logging
 import sys
 import unittest
@@ -16,7 +14,7 @@ def get_logger(name, level=logging.INFO):
 
 class TestHandler(unittest.TestCase):
     def setUp(self):
-        super(TestHandler, self).setUp()
+        super().setUp()
         self._server = mockserver.MockRecvServer("localhost")
         self._port = self._server.port
 

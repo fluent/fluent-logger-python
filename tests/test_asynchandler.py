@@ -1,5 +1,3 @@
-#  -*- coding: utf-8 -*-
-
 import logging
 import sys
 import unittest
@@ -7,11 +5,11 @@ import unittest
 try:
     from unittest import mock
 except ImportError:
-    import mock
+    from unittest import mock
 try:
     from unittest.mock import patch
 except ImportError:
-    from mock import patch
+    from unittest.mock import patch
 
 
 import fluent.asynchandler
@@ -27,7 +25,7 @@ def get_logger(name, level=logging.INFO):
 
 class TestHandler(unittest.TestCase):
     def setUp(self):
-        super(TestHandler, self).setUp()
+        super().setUp()
         self._server = mockserver.MockRecvServer("localhost")
         self._port = self._server.port
 
@@ -273,7 +271,7 @@ class TestHandlerWithCircularQueue(unittest.TestCase):
     Q_SIZE = 3
 
     def setUp(self):
-        super(TestHandlerWithCircularQueue, self).setUp()
+        super().setUp()
         self._server = mockserver.MockRecvServer("localhost")
         self._port = self._server.port
 
@@ -334,7 +332,7 @@ class TestHandlerWithCircularQueueHandler(unittest.TestCase):
     Q_SIZE = 1
 
     def setUp(self):
-        super(TestHandlerWithCircularQueueHandler, self).setUp()
+        super().setUp()
         self._server = mockserver.MockRecvServer("localhost")
         self._port = self._server.port
 
@@ -390,5 +388,5 @@ class TestHandlerWithCircularQueueHandler(unittest.TestCase):
 
                 # we can't be sure to have exception in every case due to multithreading,
                 # so we can test only for a cautelative condition here
-                print("Exception raised: {} (expected 3)".format(exc_counter))
+                print(f"Exception raised: {exc_counter} (expected 3)")
                 assert exc_counter >= 0

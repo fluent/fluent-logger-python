@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import threading
 from queue import Queue, Full, Empty
 
@@ -55,7 +53,7 @@ class FluentSender(sender.FluentSender):
         """
         :param kwargs: This kwargs argument is not used in __init__. This will be removed in the next major version.
         """
-        super(FluentSender, self).__init__(
+        super().__init__(
             tag=tag,
             host=host,
             port=port,
@@ -132,7 +130,7 @@ class FluentSender(sender.FluentSender):
             return True
 
     def _send_loop(self):
-        send_internal = super(FluentSender, self)._send_internal
+        send_internal = super()._send_internal
 
         try:
             while True:

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import logging
 import socket
 import sys
@@ -12,7 +10,7 @@ except ImportError:  # pragma: no cover
 from fluent import sender
 
 
-class FluentRecordFormatter(logging.Formatter, object):
+class FluentRecordFormatter(logging.Formatter):
     """A structured formatter for Fluent.
 
     Best used with server storing data in an ElasticSearch cluster for example.
@@ -42,7 +40,7 @@ class FluentRecordFormatter(logging.Formatter, object):
         format_json=True,
         exclude_attrs=None,
     ):
-        super(FluentRecordFormatter, self).__init__(None, datefmt)
+        super().__init__(None, datefmt)
 
         if sys.version_info[0:2] >= (3, 2) and style != "%":
             self.__style, basic_fmt_dict = {
@@ -75,7 +73,7 @@ class FluentRecordFormatter(logging.Formatter, object):
             self._exc_attrs = set(exclude_attrs)
             self._fmt_dict = None
             self._formatter = self._format_by_exclusion
-            self.usesTime = super(FluentRecordFormatter, self).usesTime
+            self.usesTime = super().usesTime
         else:
             self._exc_attrs = None
             if not fmt:
@@ -102,7 +100,7 @@ class FluentRecordFormatter(logging.Formatter, object):
 
     def format(self, record):
         # Compute attributes handled by parent class.
-        super(FluentRecordFormatter, self).format(record)
+        super().format(record)
         # Add ours
         record.hostname = self.hostname
 
@@ -144,7 +142,7 @@ class FluentRecordFormatter(logging.Formatter, object):
             return self._format_msg_default(record, msg)
 
     def _format_msg_default(self, record, msg):
-        return {"message": super(FluentRecordFormatter, self).format(record)}
+        return {"message": super().format(record)}
 
     def _format_by_exclusion(self, record):
         data = {}
@@ -273,7 +271,7 @@ class FluentHandler(logging.Handler):
             try:
                 self.sender.close()
             finally:
-                super(FluentHandler, self).close()
+                super().close()
         finally:
             self.release()
 

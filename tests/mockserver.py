@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 try:
     from cStringIO import StringIO as BytesIO
 except ImportError:
@@ -17,7 +15,7 @@ class MockRecvServer(threading.Thread):
     """
 
     def __init__(self, host="localhost", port=0):
-        super(MockRecvServer, self).__init__()
+        super().__init__()
 
         if host.startswith("unix://"):
             self.socket_proto = socket.AF_UNIX
@@ -55,7 +53,7 @@ class MockRecvServer(threading.Thread):
                         if not data:
                             break
                         self._buf.write(data)
-                    except socket.error as e:
+                    except OSError as e:
                         print("MockServer error: %s" % e)
                         break
             finally:

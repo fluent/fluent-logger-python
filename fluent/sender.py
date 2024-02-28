@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import errno
 import socket
 import struct
@@ -35,14 +33,14 @@ class EventTime(msgpack.ExtType):
     def __new__(cls, timestamp):
         seconds = int(timestamp)
         nanoseconds = int(timestamp % 1 * 10**9)
-        return super(EventTime, cls).__new__(
+        return super().__new__(
             cls,
             code=0,
             data=struct.pack(">II", seconds, nanoseconds),
         )
 
 
-class FluentSender(object):
+class FluentSender:
     def __init__(
         self,
         tag,
@@ -155,7 +153,7 @@ class FluentSender(object):
             self.pendings = None
 
             return True
-        except socket.error as e:
+        except OSError as e:
             self.last_error = e
 
             # close socket
@@ -175,13 +173,13 @@ class FluentSender(object):
             self.socket.settimeout(0.0)
             try:
                 recvd = self.socket.recv(4096)
-            except socket.error as recv_e:
+            except OSError as recv_e:
                 if recv_e.errno != errno.EWOULDBLOCK:
                     raise
                 return
 
             if recvd == b"":
-                raise socket.error(errno.EPIPE, "Broken pipe")
+                raise OSError(errno.EPIPE, "Broken pipe")
         finally:
             self.socket.settimeout(self.timeout)
 
@@ -195,7 +193,7 @@ class FluentSender(object):
         while bytes_sent < bytes_to_send:
             sent = self.socket.send(bytes_[bytes_sent:])
             if sent == 0:
-                raise socket.error(errno.EPIPE, "Broken pipe")
+                raise OSError(errno.EPIPE, "Broken pipe")
             bytes_sent += sent
         self._check_recv_side()
 
@@ -236,12 +234,12 @@ class FluentSender(object):
                 try:
                     try:
                         sock.shutdown(socket.SHUT_RDWR)
-                    except socket.error:  # pragma: no cover
+                    except OSError:  # pragma: no cover
                         pass
                 finally:
                     try:
                         sock.close()
-                    except socket.error:  # pragma: no cover
+                    except OSError:  # pragma: no cover
                         pass
         finally:
             self.socket = None

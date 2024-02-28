@@ -1,7 +1,3 @@
-# -*- coding: utf-8 -*-
-
-from __future__ import print_function
-
 import socket
 import unittest
 
@@ -47,7 +43,7 @@ class TestSetup(unittest.TestCase):
 
 class TestSender(unittest.TestCase):
     def setUp(self):
-        super(TestSender, self).setUp()
+        super().setUp()
         self._server = mockserver.MockRecvServer("localhost")
         self._sender = fluent.asyncsender.FluentSender(
             tag="test", port=self._server.port
@@ -163,7 +159,7 @@ class TestSender(unittest.TestCase):
 
 class TestSenderDefaultProperties(unittest.TestCase):
     def setUp(self):
-        super(TestSenderDefaultProperties, self).setUp()
+        super().setUp()
         self._server = mockserver.MockRecvServer("localhost")
         self._sender = fluent.asyncsender.FluentSender(
             tag="test", port=self._server.port
@@ -185,7 +181,7 @@ class TestSenderDefaultProperties(unittest.TestCase):
 
 class TestSenderWithTimeout(unittest.TestCase):
     def setUp(self):
-        super(TestSenderWithTimeout, self).setUp()
+        super().setUp()
         self._server = mockserver.MockRecvServer("localhost")
         self._sender = fluent.asyncsender.FluentSender(
             tag="test", port=self._server.port, queue_timeout=0.04
@@ -238,7 +234,7 @@ class TestSenderWithTimeoutAndCircular(unittest.TestCase):
     Q_SIZE = 3
 
     def setUp(self):
-        super(TestSenderWithTimeoutAndCircular, self).setUp()
+        super().setUp()
         self._server = mockserver.MockRecvServer("localhost")
         self._sender = fluent.asyncsender.FluentSender(
             tag="test",
@@ -291,7 +287,7 @@ class TestSenderWithTimeoutMaxSizeNonCircular(unittest.TestCase):
     Q_SIZE = 3
 
     def setUp(self):
-        super(TestSenderWithTimeoutMaxSizeNonCircular, self).setUp()
+        super().setUp()
         self._server = mockserver.MockRecvServer("localhost")
         self._sender = fluent.asyncsender.FluentSender(
             tag="test", port=self._server.port, queue_maxsize=self.Q_SIZE
@@ -342,7 +338,7 @@ class TestSenderUnlimitedSize(unittest.TestCase):
     Q_SIZE = 3
 
     def setUp(self):
-        super(TestSenderUnlimitedSize, self).setUp()
+        super().setUp()
         self._server = mockserver.MockRecvServer("localhost")
         self._sender = fluent.asyncsender.FluentSender(
             tag="test", port=self._server.port, queue_timeout=0.04, queue_maxsize=0
@@ -365,7 +361,7 @@ class TestSenderUnlimitedSize(unittest.TestCase):
 
             NUM = 1000
             for i in range(1, NUM + 1):
-                ok = sender.emit("foo{}".format(i), {"bar": "baz{}".format(i)})
+                ok = sender.emit(f"foo{i}", {"bar": f"baz{i}"})
                 self.assertTrue(ok)
 
         data = self.get_data()
@@ -380,5 +376,5 @@ class TestSenderUnlimitedSize(unittest.TestCase):
 
         el = data[NUM - 1]
         eq(3, len(el))
-        eq("test.foo{}".format(NUM), el[0])
-        eq({"bar": "baz{}".format(NUM)}, el[2])
+        eq(f"test.foo{NUM}", el[0])
+        eq({"bar": f"baz{NUM}"}, el[2])
