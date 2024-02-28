@@ -18,6 +18,7 @@ from tests import mockserver
 class TestSetup(unittest.TestCase):
     def tearDown(self):
         from fluent.sender import _set_global_sender
+
         _set_global_sender(None)
 
     def test_no_kwargs(self):
@@ -48,9 +49,8 @@ class TestSetup(unittest.TestCase):
 class TestSender(unittest.TestCase):
     def setUp(self):
         super(TestSender, self).setUp()
-        self._server = mockserver.MockRecvServer('localhost')
-        self._sender = fluent.sender.FluentSender(tag='test',
-                                                  port=self._server.port)
+        self._server = mockserver.MockRecvServer("localhost")
+        self._sender = fluent.sender.FluentSender(tag="test", port=self._server.port)
 
     def tearDown(self):
         try:
@@ -63,40 +63,40 @@ class TestSender(unittest.TestCase):
 
     def test_simple(self):
         sender = self._sender
-        sender.emit('foo', {'bar': 'baz'})
+        sender.emit("foo", {"bar": "baz"})
         sender._close()
         data = self.get_data()
         eq = self.assertEqual
         eq(1, len(data))
         eq(3, len(data[0]))
-        eq('test.foo', data[0][0])
-        eq({'bar': 'baz'}, data[0][2])
+        eq("test.foo", data[0][0])
+        eq({"bar": "baz"}, data[0][2])
         self.assertTrue(data[0][1])
         self.assertTrue(isinstance(data[0][1], int))
 
     def test_decorator_simple(self):
         with self._sender as sender:
-            sender.emit('foo', {'bar': 'baz'})
+            sender.emit("foo", {"bar": "baz"})
         data = self.get_data()
         eq = self.assertEqual
         eq(1, len(data))
         eq(3, len(data[0]))
-        eq('test.foo', data[0][0])
-        eq({'bar': 'baz'}, data[0][2])
+        eq("test.foo", data[0][0])
+        eq({"bar": "baz"}, data[0][2])
         self.assertTrue(data[0][1])
         self.assertTrue(isinstance(data[0][1], int))
 
     def test_nanosecond(self):
         sender = self._sender
         sender.nanosecond_precision = True
-        sender.emit('foo', {'bar': 'baz'})
+        sender.emit("foo", {"bar": "baz"})
         sender._close()
         data = self.get_data()
         eq = self.assertEqual
         eq(1, len(data))
         eq(3, len(data[0]))
-        eq('test.foo', data[0][0])
-        eq({'bar': 'baz'}, data[0][2])
+        eq("test.foo", data[0][0])
+        eq({"bar": "baz"}, data[0][2])
         self.assertTrue(isinstance(data[0][1], msgpack.ExtType))
         eq(data[0][1].code, 0)
 
@@ -104,21 +104,21 @@ class TestSender(unittest.TestCase):
         time = 1490061367.8616468906402588
         sender = self._sender
         sender.nanosecond_precision = True
-        sender.emit_with_time('foo', time, {'bar': 'baz'})
+        sender.emit_with_time("foo", time, {"bar": "baz"})
         sender._close()
         data = self.get_data()
         eq = self.assertEqual
         eq(1, len(data))
         eq(3, len(data[0]))
-        eq('test.foo', data[0][0])
-        eq({'bar': 'baz'}, data[0][2])
+        eq("test.foo", data[0][0])
+        eq({"bar": "baz"}, data[0][2])
         self.assertTrue(isinstance(data[0][1], msgpack.ExtType))
         eq(data[0][1].code, 0)
-        eq(data[0][1].data, b'X\xd0\x8873[\xb0*')
+        eq(data[0][1].data, b"X\xd0\x8873[\xb0*")
 
     def test_no_last_error_on_successful_emit(self):
         sender = self._sender
-        sender.emit('foo', {'bar': 'baz'})
+        sender.emit("foo", {"bar": "baz"})
         sender._close()
 
         self.assertEqual(sender.last_error, None)
@@ -159,7 +159,7 @@ class TestSender(unittest.TestCase):
     def test_verbose(self):
         with self._sender as sender:
             sender.verbose = True
-            sender.emit('foo', {'bar': 'baz'})
+            sender.emit("foo", {"bar": "baz"})
             # No assertions here, just making sure there are no exceptions
 
     def test_failure_to_connect(self):
@@ -222,13 +222,14 @@ class TestSender(unittest.TestCase):
                     self.to = 123
                     self.send_side_effects = [3, 0, 9]
                     self.send_idx = 0
-                    self.recv_side_effects = [socket.error(errno.EWOULDBLOCK, "Blah"),
-                                              b"this data is going to be ignored",
-                                              b"",
-                                              socket.error(errno.EWOULDBLOCK, "Blah"),
-                                              socket.error(errno.EWOULDBLOCK, "Blah"),
-                                              socket.error(errno.EACCES, "This error will never happen"),
-                                              ]
+                    self.recv_side_effects = [
+                        socket.error(errno.EWOULDBLOCK, "Blah"),
+                        b"this data is going to be ignored",
+                        b"",
+                        socket.error(errno.EWOULDBLOCK, "Blah"),
+                        socket.error(errno.EWOULDBLOCK, "Blah"),
+                        socket.error(errno.EACCES, "This error will never happen"),
+                    ]
                     self.recv_idx = 0
 
                 def send(self, bytes_):
@@ -296,16 +297,15 @@ class TestSender(unittest.TestCase):
         self.tearDown()
         tmp_dir = mkdtemp()
         try:
-            server_file = 'unix://' + tmp_dir + "/tmp.unix"
+            server_file = "unix://" + tmp_dir + "/tmp.unix"
             self._server = mockserver.MockRecvServer(server_file)
-            self._sender = fluent.sender.FluentSender(tag='test',
-                                                      host=server_file)
+            self._sender = fluent.sender.FluentSender(tag="test", host=server_file)
             with self._sender as sender:
-                self.assertTrue(sender.emit('foo', {'bar': 'baz'}))
+                self.assertTrue(sender.emit("foo", {"bar": "baz"}))
 
             data = self._server.get_received()
             self.assertEqual(len(data), 1)
-            self.assertEqual(data[0][2], {'bar': 'baz'})
+            self.assertEqual(data[0][2], {"bar": "baz"})
 
         finally:
             rmtree(tmp_dir, True)
@@ -315,4 +315,4 @@ class TestEventTime(unittest.TestCase):
     def test_event_time(self):
         time = fluent.sender.EventTime(1490061367.8616468906402588)
         self.assertEqual(time.code, 0)
-        self.assertEqual(time.data, b'X\xd0\x8873[\xb0*')
+        self.assertEqual(time.data, b"X\xd0\x8873[\xb0*")

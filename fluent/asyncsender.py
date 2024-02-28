@@ -17,8 +17,7 @@ _global_sender = None
 
 
 def _set_global_sender(sender):  # pragma: no cover
-    """ [For testing] Function to set global sender directly
-    """
+    """[For testing] Function to set global sender directly"""
     global _global_sender
     _global_sender = sender
 
@@ -37,28 +36,37 @@ def close():  # pragma: no cover
 
 
 class FluentSender(sender.FluentSender):
-    def __init__(self,
-                 tag,
-                 host='localhost',
-                 port=24224,
-                 bufmax=1 * 1024 * 1024,
-                 timeout=3.0,
-                 verbose=False,
-                 buffer_overflow_handler=None,
-                 nanosecond_precision=False,
-                 msgpack_kwargs=None,
-                 queue_maxsize=DEFAULT_QUEUE_MAXSIZE,
-                 queue_circular=DEFAULT_QUEUE_CIRCULAR,
-                 queue_overflow_handler=None,
-                 **kwargs):
+    def __init__(
+        self,
+        tag,
+        host="localhost",
+        port=24224,
+        bufmax=1 * 1024 * 1024,
+        timeout=3.0,
+        verbose=False,
+        buffer_overflow_handler=None,
+        nanosecond_precision=False,
+        msgpack_kwargs=None,
+        queue_maxsize=DEFAULT_QUEUE_MAXSIZE,
+        queue_circular=DEFAULT_QUEUE_CIRCULAR,
+        queue_overflow_handler=None,
+        **kwargs,
+    ):
         """
         :param kwargs: This kwargs argument is not used in __init__. This will be removed in the next major version.
         """
-        super(FluentSender, self).__init__(tag=tag, host=host, port=port, bufmax=bufmax, timeout=timeout,
-                                           verbose=verbose, buffer_overflow_handler=buffer_overflow_handler,
-                                           nanosecond_precision=nanosecond_precision,
-                                           msgpack_kwargs=msgpack_kwargs,
-                                           **kwargs)
+        super(FluentSender, self).__init__(
+            tag=tag,
+            host=host,
+            port=port,
+            bufmax=bufmax,
+            timeout=timeout,
+            verbose=verbose,
+            buffer_overflow_handler=buffer_overflow_handler,
+            nanosecond_precision=nanosecond_precision,
+            msgpack_kwargs=msgpack_kwargs,
+            **kwargs,
+        )
         self._queue_maxsize = queue_maxsize
         self._queue_circular = queue_circular
         if queue_circular and queue_overflow_handler:
@@ -66,12 +74,15 @@ class FluentSender(sender.FluentSender):
         else:
             self._queue_overflow_handler = self._queue_overflow_handler_default
 
-        self._thread_guard = threading.Event()  # This ensures visibility across all variables
+        self._thread_guard = (
+            threading.Event()
+        )  # This ensures visibility across all variables
         self._closed = False
 
         self._queue = Queue(maxsize=queue_maxsize)
-        self._send_thread = threading.Thread(target=self._send_loop,
-                                             name="AsyncFluentSender %d" % id(self))
+        self._send_thread = threading.Thread(
+            target=self._send_loop, name="AsyncFluentSender %d" % id(self)
+        )
         self._send_thread.daemon = True
         self._send_thread.start()
 

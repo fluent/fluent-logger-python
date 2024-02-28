@@ -13,7 +13,7 @@ from fluent import sender
 
 
 class FluentRecordFormatter(logging.Formatter, object):
-    """ A structured formatter for Fluent.
+    """A structured formatter for Fluent.
 
     Best used with server storing data in an ElasticSearch cluster for example.
 
@@ -33,29 +33,42 @@ class FluentRecordFormatter(logging.Formatter, object):
         Can be an iterable.
     """
 
-    def __init__(self, fmt=None, datefmt=None, style='%', fill_missing_fmt_key=False, format_json=True,
-                 exclude_attrs=None):
+    def __init__(
+        self,
+        fmt=None,
+        datefmt=None,
+        style="%",
+        fill_missing_fmt_key=False,
+        format_json=True,
+        exclude_attrs=None,
+    ):
         super(FluentRecordFormatter, self).__init__(None, datefmt)
 
-        if sys.version_info[0:2] >= (3, 2) and style != '%':
+        if sys.version_info[0:2] >= (3, 2) and style != "%":
             self.__style, basic_fmt_dict = {
-                '{': (logging.StrFormatStyle, {
-                    'sys_host': '{hostname}',
-                    'sys_name': '{name}',
-                    'sys_module': '{module}',
-                }),
-                '$': (logging.StringTemplateStyle, {
-                    'sys_host': '${hostname}',
-                    'sys_name': '${name}',
-                    'sys_module': '${module}',
-                }),
+                "{": (
+                    logging.StrFormatStyle,
+                    {
+                        "sys_host": "{hostname}",
+                        "sys_name": "{name}",
+                        "sys_module": "{module}",
+                    },
+                ),
+                "$": (
+                    logging.StringTemplateStyle,
+                    {
+                        "sys_host": "${hostname}",
+                        "sys_name": "${name}",
+                        "sys_module": "${module}",
+                    },
+                ),
             }[style]
         else:
             self.__style = None
             basic_fmt_dict = {
-                'sys_host': '%(hostname)s',
-                'sys_name': '%(name)s',
-                'sys_module': '%(module)s',
+                "sys_host": "%(hostname)s",
+                "sys_name": "%(name)s",
+                "sys_module": "%(module)s",
             }
 
         if exclude_attrs is not None:
@@ -103,7 +116,7 @@ class FluentRecordFormatter(logging.Formatter, object):
         """This method is substituted on construction based on settings for performance reasons"""
 
     def _structuring(self, data, record):
-        """ Melds `msg` into `data`.
+        """Melds `msg` into `data`.
 
         :param data: dictionary to be sent to fluent server
         :param msg: :class:`LogRecord`'s message to add to `data`.
@@ -118,7 +131,7 @@ class FluentRecordFormatter(logging.Formatter, object):
         elif isinstance(msg, str):
             self._add_dic(data, self._format_msg(record, msg))
         else:
-            self._add_dic(data, {'message': msg})
+            self._add_dic(data, {"message": msg})
 
     def _format_msg_json(self, record, msg):
         try:
@@ -131,7 +144,7 @@ class FluentRecordFormatter(logging.Formatter, object):
             return self._format_msg_default(record, msg)
 
     def _format_msg_default(self, record, msg):
-        return {'message': super(FluentRecordFormatter, self).format(record)}
+        return {"message": super(FluentRecordFormatter, self).format(record)}
 
     def _format_by_exclusion(self, record):
         data = {}
@@ -175,17 +188,18 @@ class FluentHandler(logging.Handler):
     Logging Handler for fluent.
     """
 
-    def __init__(self,
-                 tag,
-                 host='localhost',
-                 port=24224,
-                 timeout=3.0,
-                 verbose=False,
-                 buffer_overflow_handler=None,
-                 msgpack_kwargs=None,
-                 nanosecond_precision=False,
-                 **kwargs):
-
+    def __init__(
+        self,
+        tag,
+        host="localhost",
+        port=24224,
+        timeout=3.0,
+        verbose=False,
+        buffer_overflow_handler=None,
+        msgpack_kwargs=None,
+        nanosecond_precision=False,
+        **kwargs,
+    ):
         self.tag = tag
         self._host = host
         self._port = port
@@ -213,29 +227,45 @@ class FluentHandler(logging.Handler):
                 buffer_overflow_handler=self._buffer_overflow_handler,
                 msgpack_kwargs=self._msgpack_kwargs,
                 nanosecond_precision=self._nanosecond_precision,
-                **self._kwargs
+                **self._kwargs,
             )
         return self._sender
 
-    def getSenderInstance(self, tag, host, port, timeout, verbose,
-                          buffer_overflow_handler, msgpack_kwargs,
-                          nanosecond_precision, **kwargs):
+    def getSenderInstance(
+        self,
+        tag,
+        host,
+        port,
+        timeout,
+        verbose,
+        buffer_overflow_handler,
+        msgpack_kwargs,
+        nanosecond_precision,
+        **kwargs,
+    ):
         sender_class = self.getSenderClass()
-        return sender_class(tag,
-                            host=host, port=port,
-                            timeout=timeout, verbose=verbose,
-                            buffer_overflow_handler=buffer_overflow_handler,
-                            msgpack_kwargs=msgpack_kwargs,
-                            nanosecond_precision=nanosecond_precision, **kwargs)
+        return sender_class(
+            tag,
+            host=host,
+            port=port,
+            timeout=timeout,
+            verbose=verbose,
+            buffer_overflow_handler=buffer_overflow_handler,
+            msgpack_kwargs=msgpack_kwargs,
+            nanosecond_precision=nanosecond_precision,
+            **kwargs,
+        )
 
     def emit(self, record):
         data = self.format(record)
         _sender = self.sender
-        return _sender.emit_with_time(None,
-                                      sender.EventTime(record.created)
-                                      if _sender.nanosecond_precision
-                                      else int(record.created),
-                                      data)
+        return _sender.emit_with_time(
+            None,
+            sender.EventTime(record.created)
+            if _sender.nanosecond_precision
+            else int(record.created),
+            data,
+        )
 
     def close(self):
         self.acquire()
