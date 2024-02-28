@@ -7,7 +7,7 @@ from tests import mockserver
 
 
 class TestException(BaseException):
-    __test__ = False
+    __test__ = False  # teach pytest this is not test class.
 
 
 class TestEvent(unittest.TestCase):
