@@ -1,11 +1,6 @@
+import json
 import logging
 import socket
-import sys
-
-try:
-    import simplejson as json
-except ImportError:  # pragma: no cover
-    import json
 
 from fluent import sender
 
@@ -42,7 +37,7 @@ class FluentRecordFormatter(logging.Formatter):
     ):
         super().__init__(None, datefmt)
 
-        if sys.version_info[0:2] >= (3, 2) and style != "%":
+        if style != "%":
             self.__style, basic_fmt_dict = {
                 "{": (
                     logging.StrFormatStyle,

@@ -1,5 +1,4 @@
 import logging
-import sys
 import unittest
 
 import fluent.handler
@@ -139,9 +138,6 @@ class TestHandler(unittest.TestCase):
         self.assertEqual(1234, data[0][2]["x"])
         self.assertEqual(1, data[0][2]["custom_value"])
 
-    @unittest.skipUnless(
-        sys.version_info[0:2] >= (3, 2), "supported with Python 3.2 or above"
-    )
     def test_custom_fmt_with_format_style(self):
         handler = fluent.handler.FluentHandler("app.follow", port=self._port)
 
@@ -167,9 +163,6 @@ class TestHandler(unittest.TestCase):
         self.assertTrue("lineno" in data[0][2])
         self.assertTrue("emitted_at" in data[0][2])
 
-    @unittest.skipUnless(
-        sys.version_info[0:2] >= (3, 2), "supported with Python 3.2 or above"
-    )
     def test_custom_fmt_with_template_style(self):
         handler = fluent.handler.FluentHandler("app.follow", port=self._port)
 
