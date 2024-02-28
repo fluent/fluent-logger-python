@@ -25,11 +25,9 @@ class TestHandler(unittest.TestCase):
         super(TestHandler, self).setUp()
         self._server = mockserver.MockRecvServer('localhost')
         self._port = self._server.port
-        logging.getLogger().setLevel(logging.INFO)
 
     def tearDown(self):
         self._server.close()
-        self._server = None
 
     def get_handler_class(self):
         # return fluent.handler.FluentHandler
@@ -38,11 +36,16 @@ class TestHandler(unittest.TestCase):
     def get_data(self):
         return self._server.get_received()
 
+    def get_logger(self, name, level=logging.INFO):
+        logger = logging.getLogger(name)
+        logger.setLevel(level)
+        return logger
+
     def test_simple(self):
         handler = self.get_handler_class()('app.follow', port=self._port)
 
         with handler:
-            log = logging.getLogger('fluent.test')
+            log = self.get_logger('fluent.test')
             handler.setFormatter(fluent.handler.FluentRecordFormatter())
             log.addHandler(handler)
             log.info({
@@ -64,7 +67,7 @@ class TestHandler(unittest.TestCase):
         handler = self.get_handler_class()('app.follow', port=self._port)
 
         with handler:
-            log = logging.getLogger('fluent.test')
+            log = self.get_logger('fluent.test')
             handler.setFormatter(
                 fluent.handler.FluentRecordFormatter(fmt={
                     'name': '%(name)s',
@@ -86,7 +89,7 @@ class TestHandler(unittest.TestCase):
         handler = self.get_handler_class()('app.follow', port=self._port)
 
         with handler:
-            log = logging.getLogger('fluent.test')
+            log = self.get_logger('fluent.test')
             handler.setFormatter(
                 fluent.handler.FluentRecordFormatter(fmt={
                     'name': '{name}',
@@ -108,7 +111,7 @@ class TestHandler(unittest.TestCase):
         handler = self.get_handler_class()('app.follow', port=self._port)
 
         with handler:
-            log = logging.getLogger('fluent.test')
+            log = self.get_logger('fluent.test')
             handler.setFormatter(
                 fluent.handler.FluentRecordFormatter(fmt={
                     'name': '${name}',
@@ -129,7 +132,7 @@ class TestHandler(unittest.TestCase):
         handler = self.get_handler_class()('app.follow', port=self._port)
 
         with handler:
-            log = logging.getLogger('fluent.test')
+            log = self.get_logger('fluent.test')
             handler.setFormatter(
                 fluent.handler.FluentRecordFormatter(fmt={
                     'name': '%(name)s',
@@ -144,7 +147,7 @@ class TestHandler(unittest.TestCase):
     def test_custom_field_fill_missing_fmt_key_is_true(self):
         handler = self.get_handler_class()('app.follow', port=self._port)
         with handler:
-            log = logging.getLogger('fluent.test')
+            log = self.get_logger('fluent.test')
             handler.setFormatter(
                 fluent.handler.FluentRecordFormatter(fmt={
                     'name': '%(name)s',
@@ -168,7 +171,7 @@ class TestHandler(unittest.TestCase):
         handler = self.get_handler_class()('app.follow', port=self._port)
 
         with handler:
-            log = logging.getLogger('fluent.test')
+            log = self.get_logger('fluent.test')
             handler.setFormatter(fluent.handler.FluentRecordFormatter())
             log.addHandler(handler)
             log.info('{"key": "hello world!", "param": "value"}')
@@ -181,7 +184,7 @@ class TestHandler(unittest.TestCase):
         handler = self.get_handler_class()('app.follow', port=self._port)
 
         with handler:
-            log = logging.getLogger('fluent.test')
+            log = self.get_logger('fluent.test')
             handler.setFormatter(fluent.handler.FluentRecordFormatter())
             log.addHandler(handler)
             log.info('hello %s', 'world')
@@ -194,7 +197,7 @@ class TestHandler(unittest.TestCase):
         handler = self.get_handler_class()('app.follow', port=self._port)
 
         with handler:
-            log = logging.getLogger('fluent.test')
+            log = self.get_logger('fluent.test')
             handler.setFormatter(fluent.handler.FluentRecordFormatter())
             log.addHandler(handler)
             log.info('hello world, %s', 'you!')
@@ -207,7 +210,7 @@ class TestHandler(unittest.TestCase):
         handler = self.get_handler_class()('app.follow', port=self._port)
 
         with handler:
-            log = logging.getLogger('fluent.test')
+            log = self.get_logger('fluent.test')
             handler.setFormatter(fluent.handler.FluentRecordFormatter())
             log.addHandler(handler)
             log.info("1")
@@ -219,7 +222,7 @@ class TestHandler(unittest.TestCase):
         handler = self.get_handler_class()('app.follow', port=self._port)
 
         with handler:
-            log = logging.getLogger('fluent.test')
+            log = self.get_logger('fluent.test')
             handler.setFormatter(fluent.handler.FluentRecordFormatter())
             log.addHandler(handler)
             log.info(42)
@@ -231,7 +234,7 @@ class TestHandler(unittest.TestCase):
         handler = self.get_handler_class()('app.follow', port=self._port)
 
         with handler:
-            log = logging.getLogger('fluent.test')
+            log = self.get_logger('fluent.test')
             handler.setFormatter(fluent.handler.FluentRecordFormatter())
             log.addHandler(handler)
             log.info({42: 'root'})
@@ -244,7 +247,7 @@ class TestHandler(unittest.TestCase):
         handler = self.get_handler_class()('app.follow', port=self._port)
 
         with handler:
-            log = logging.getLogger('fluent.test')
+            log = self.get_logger('fluent.test')
             handler.setFormatter(fluent.handler.FluentRecordFormatter())
             log.addHandler(handler)
             try:
@@ -286,7 +289,7 @@ class TestHandlerWithCircularQueue(unittest.TestCase):
             self.assertEqual(handler.sender.queue_circular, True)
             self.assertEqual(handler.sender.queue_maxsize, self.Q_SIZE)
 
-            log = logging.getLogger('fluent.test')
+            log = self.get_logger('fluent.test')
             handler.setFormatter(fluent.handler.FluentRecordFormatter())
             log.addHandler(handler)
             log.info({'cnt': 1, 'from': 'userA', 'to': 'userB'})
@@ -347,7 +350,7 @@ class TestHandlerWithCircularQueueHandler(unittest.TestCase):
                 self.assertEqual(handler.sender.queue_circular, True)
                 self.assertEqual(handler.sender.queue_maxsize, self.Q_SIZE)
 
-                log = logging.getLogger('fluent.test')
+                log = self.get_logger('fluent.test')
                 handler.setFormatter(fluent.handler.FluentRecordFormatter())
                 log.addHandler(handler)
 

@@ -19,7 +19,7 @@ class TestEvent(unittest.TestCase):
         from fluent.sender import _set_global_sender
         sender.close()
         _set_global_sender(None)
-
+ 
     def test_logging(self):
         # XXX: This tests succeeds even if the fluentd connection failed
         # send event with tag app.follow
