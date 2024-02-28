@@ -219,7 +219,7 @@ class FluentSender(object):
         try:
             if self.buffer_overflow_handler:
                 self.buffer_overflow_handler(pending_events)
-        except Exception as e:
+        except Exception:
             # User should care any exception in handler
             pass
 
