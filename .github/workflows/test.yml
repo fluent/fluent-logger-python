@@ -3,7 +3,7 @@ name: Run test
 on:
   push:
     branches:
-      - main
+      - master
   pull_request:
 
 jobs:
@@ -30,8 +30,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - run: pipx run hatch build
-    - uses: actions/upload-artifact@v2
+    - run: pipx run build
+    - uses: actions/upload-artifact@v4
       with:
         name: dist
-        path: dist/*.*
+        path: dist/
