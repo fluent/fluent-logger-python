@@ -7,6 +7,17 @@ on:
   pull_request:
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install Ruff
+      run: pipx install ruff
+    - name: Ruff check
+      run: ruff check
+    - name: Ruff format
+      run: ruff format --diff
+
   test:
     runs-on: ubuntu-latest
     strategy:
