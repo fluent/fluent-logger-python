@@ -142,6 +142,12 @@ class TestSender(unittest.TestCase):
         self.assertEqual(len(data), 1)
         self.assertEqual(data[0][2]["message"], "Can't output to log")
 
+    def test_emit_error_no_forward(self):
+        with self._sender as sender:
+            sender.forward_packet_error = False
+            with self.assertRaises(TypeError):
+                sender.emit("blah", {"a": object()})
+
     def test_emit_after_close(self):
         with self._sender as sender:
             self.assertTrue(sender.emit("blah", {"a": "123"}))
