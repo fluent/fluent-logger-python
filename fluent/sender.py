@@ -30,14 +30,20 @@ def close():  # pragma: no cover
 
 
 class EventTime(msgpack.ExtType):
-    def __new__(cls, timestamp):
+    def __new__(cls, timestamp, nanoseconds=None):
         seconds = int(timestamp)
-        nanoseconds = int(timestamp % 1 * 10**9)
+        if nanoseconds is None:
+            nanoseconds = int(timestamp % 1 * 10**9)
         return super().__new__(
             cls,
             code=0,
             data=struct.pack(">II", seconds, nanoseconds),
         )
+
+    @classmethod
+    def from_unix_nano(cls, unix_nano):
+        seconds, nanos = divmod(unix_nano, 10**9)
+        return cls(seconds, nanos)
 
 
 class FluentSender:
@@ -78,7 +84,7 @@ class FluentSender:
 
     def emit(self, label, data):
         if self.nanosecond_precision:
-            cur_time = EventTime(time.time())
+            cur_time = EventTime.from_unix_nano(time.time_ns())
         else:
             cur_time = int(time.time())
         return self.emit_with_time(label, cur_time, data)
@@ -129,7 +135,7 @@ class FluentSender:
 
     def _make_packet(self, label, timestamp, data):
         if label:
-            tag = ".".join((self.tag, label)) if self.tag else label
+            tag = f"{self.tag}.{label}" if self.tag else label
         else:
             tag = self.tag
         if self.nanosecond_precision and isinstance(timestamp, float):
