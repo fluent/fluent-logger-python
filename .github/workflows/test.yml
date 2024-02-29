@@ -1,0 +1,48 @@
+name: Run test
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Install Ruff
+      run: pipx install ruff
+    - name: Ruff check
+      run: ruff check
+    - name: Ruff format
+      run: ruff format --diff
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.7", "3.8", "3.9", "3.10", "3.11", "3.12", "pypy3.9", "pypy3.10"]
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: "pip"
+        cache-dependency-path: requirements-dev.txt
+    - name: Install dependencies
+      run: python -m pip install -r requirements-dev.txt
+    - name: Run tests
+      run: pytest --cov=fluent
+
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - run: pipx run build
+    - uses: actions/upload-artifact@v4
+      with:
+        name: dist
+        path: dist/

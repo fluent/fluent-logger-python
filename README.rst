@@ -1,20 +1,12 @@
-A Python structured logger for Fluentd
-======================================
-
-.. image:: https://travis-ci.org/fluent/fluent-logger-python.svg?branch=master
-   :target: https://travis-ci.org/fluent/fluent-logger-python
-   :alt: Build Status
-
-.. image:: https://coveralls.io/repos/fluent/fluent-logger-python/badge.svg
-   :target: https://coveralls.io/r/fluent/fluent-logger-python
-   :alt: Coverage Status
+A Python structured logger for Fluentd/Fluent Bit
+=================================================
 
 Many web/mobile applications generate huge amount of event logs (c,f.
 login, logout, purchase, follow, etc). To analyze these event logs could
 be really valuable for improving the service. However, the challenge is
 collecting these logs easily and reliably.
 
-`Fluentd <https://github.com/fluent/fluentd>`__ solves that problem by
+`Fluentd <https://github.com/fluent/fluentd>`__ and `Fluent Bit <https://fluentbit.io/>`__ solves that problem by
 having: easy installation, small footprint, plugins, reliable buffering,
 log forwarding, etc.
 
@@ -24,10 +16,11 @@ Python application.
 Requirements
 ------------
 
--  Python 3.5+
+-  Python 3.7+
 - ``msgpack``
 - **IMPORTANT**: Version 0.8.0 is the last version supporting Python 2.6, 3.2 and 3.3
 - **IMPORTANT**: Version 0.9.6 is the last version supporting Python 2.7 and 3.4
+- **IMPORTANT**: Version 0.10.0 is the last version supporting Python 3.5 and 3.6
 
 Installation
 ------------
@@ -366,23 +359,22 @@ that this doesn't happen, or it's acceptable for your application.
 Testing
 -------
 
-Testing can be done using
-`nose <https://nose.readthedocs.org/en/latest/>`__.
+Testing can be done using `pytest <https://docs.pytest.org>`__.
+
+.. code:: sh
+
+    $ pytest tests
+
 
 Release
 -------
 
-Need wheel package.
-
 .. code:: sh
 
-    $ pip install wheel
+    $ # Download dist.zip for release from GitHub Action artifact.
+    $ unzip -d dist dist.zip
+    $ pipx twine upload dist/*
 
-After that, type following command:
-
-.. code:: sh
-
-    $ python setup.py clean sdist bdist_wheel upload
 
 Contributors
 ------------
