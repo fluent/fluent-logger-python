@@ -51,8 +51,9 @@ class FluentSender:
         verbose=False,
         buffer_overflow_handler=None,
         nanosecond_precision=False,
-        forward_packet_error=True,
         msgpack_kwargs=None,
+        *,
+        forward_packet_error=True,
         **kwargs,
     ):
         """
