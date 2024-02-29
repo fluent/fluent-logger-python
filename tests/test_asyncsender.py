@@ -1,4 +1,3 @@
-import socket
 import unittest
 
 import msgpack
@@ -122,13 +121,13 @@ class TestSender(unittest.TestCase):
 
     def test_last_error_property(self):
         EXCEPTION_MSG = "custom exception for testing last_error property"
-        self._sender.last_error = socket.error(EXCEPTION_MSG)
+        self._sender.last_error = OSError(EXCEPTION_MSG)
 
         self.assertEqual(self._sender.last_error.args[0], EXCEPTION_MSG)
 
     def test_clear_last_error(self):
         EXCEPTION_MSG = "custom exception for testing clear_last_error"
-        self._sender.last_error = socket.error(EXCEPTION_MSG)
+        self._sender.last_error = OSError(EXCEPTION_MSG)
         self._sender.clear_last_error()
 
         self.assertEqual(self._sender.last_error, None)
@@ -141,7 +140,7 @@ class TestSender(unittest.TestCase):
         # Make the socket.socket().connect() call raise a custom exception
         mock_connect = mock_socket.socket.return_value.connect
         EXCEPTION_MSG = "a sender init socket connect() exception"
-        mock_connect.side_effect = socket.error(EXCEPTION_MSG)
+        mock_connect.side_effect = OSError(EXCEPTION_MSG)
 
         self.assertEqual(self._sender.last_error.args[0], EXCEPTION_MSG)
 

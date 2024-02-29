@@ -1,5 +1,5 @@
 import threading
-from queue import Queue, Full, Empty
+from queue import Empty, Full, Queue
 
 from fluent import sender
 from fluent.sender import EventTime

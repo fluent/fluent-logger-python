@@ -1,5 +1,4 @@
-from fluent import asyncsender
-from fluent import handler
+from fluent import asyncsender, handler
 
 
 class FluentHandler(handler.FluentHandler):
