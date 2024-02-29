@@ -2,7 +2,9 @@
 
 [run]
 branch = True
-omit = */tests/*
+omit =
+    */tests/*
+    fluent/__about__.py
 
 [report]
 omit = */tests/*
