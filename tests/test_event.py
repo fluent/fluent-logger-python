@@ -28,7 +28,7 @@ class TestEvent(unittest.TestCase):
         # XXX: This tests succeeds even if the fluentd connection failed
 
         # send event with tag app.follow, with timestamp
-        event.Event("follow", {"from": "userA", "to": "userB"}, time=int(0))
+        event.Event("follow", {"from": "userA", "to": "userB"}, time=0)
 
     def test_no_last_error_on_successful_event(self):
         global_sender = sender.get_global_sender()

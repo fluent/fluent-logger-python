@@ -76,7 +76,7 @@ class FluentRecordFormatter(logging.Formatter):
                 self._formatter = self._format_by_dict
                 self.usesTime = self._format_by_dict_uses_time
             else:
-                if hasattr(fmt, "__call__"):
+                if callable(fmt):
                     self._formatter = fmt
                     self.usesTime = fmt.usesTime
                 else:

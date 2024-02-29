@@ -1,5 +1,4 @@
 import errno
-import socket
 import sys
 import unittest
 from shutil import rmtree
@@ -121,13 +120,13 @@ class TestSender(unittest.TestCase):
 
     def test_last_error_property(self):
         EXCEPTION_MSG = "custom exception for testing last_error property"
-        self._sender.last_error = socket.error(EXCEPTION_MSG)
+        self._sender.last_error = OSError(EXCEPTION_MSG)
 
         self.assertEqual(self._sender.last_error.args[0], EXCEPTION_MSG)
 
     def test_clear_last_error(self):
         EXCEPTION_MSG = "custom exception for testing clear_last_error"
-        self._sender.last_error = socket.error(EXCEPTION_MSG)
+        self._sender.last_error = OSError(EXCEPTION_MSG)
         self._sender.clear_last_error()
 
         self.assertEqual(self._sender.last_error, None)
@@ -225,12 +224,12 @@ class TestSender(unittest.TestCase):
                     self.send_side_effects = [3, 0, 9]
                     self.send_idx = 0
                     self.recv_side_effects = [
-                        socket.error(errno.EWOULDBLOCK, "Blah"),
+                        OSError(errno.EWOULDBLOCK, "Blah"),
                         b"this data is going to be ignored",
                         b"",
-                        socket.error(errno.EWOULDBLOCK, "Blah"),
-                        socket.error(errno.EWOULDBLOCK, "Blah"),
-                        socket.error(errno.EACCES, "This error will never happen"),
+                        OSError(errno.EWOULDBLOCK, "Blah"),
+                        OSError(errno.EWOULDBLOCK, "Blah"),
+                        OSError(errno.EACCES, "This error will never happen"),
                     ]
                     self.recv_idx = 0
 
