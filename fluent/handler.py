@@ -80,6 +80,9 @@ class FluentRecordFormatter(logging.Formatter):
                     self._formatter = fmt
                     self.usesTime = fmt.usesTime
                 else:
+                    if type(fmt) == str:
+                        import ast
+                        fmt = ast.literal_eval(fmt)
                     self._fmt_dict = fmt
                     self._formatter = self._format_by_dict
                     self.usesTime = self._format_by_dict_uses_time
