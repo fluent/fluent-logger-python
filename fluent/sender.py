@@ -133,6 +133,13 @@ class FluentSender:
             self._close()
             self.pendings = None
 
+    def _is_ipv4_host(self):
+        try:
+            socket.getaddrinfo(self.host, None, socket.AF_INET)
+            return True
+        except socket.error:
+            return False
+
     def _make_packet(self, label, timestamp, data):
         if label:
             tag = f"{self.tag}.{label}" if self.tag else label
@@ -216,7 +223,12 @@ class FluentSender:
                     sock.settimeout(self.timeout)
                     sock.connect(self.host[len("unix://") :])
                 else:
-                    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    if self._is_ipv4_host():
+                        sock = socket.socket(socket.AF_INET,
+                                             socket.SOCK_STREAM)
+                    else:
+                        sock = socket.socket(socket.AF_INET6,
+                                             socket.SOCK_STREAM)
                     sock.settimeout(self.timeout)
                     # This might be controversial and may need to be removed
                     sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
