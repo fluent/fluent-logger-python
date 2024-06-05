@@ -1,10 +1,16 @@
-from fluent import asyncsender, handler
+from fluent import asyncsender, handler, sender
 
 
 class FluentHandler(handler.FluentHandler):
     """
     Asynchronous Logging Handler for fluent.
     """
+
+    def getSenderInstance(self, **kwargs):
+        try:
+            return super().getSenderInstance(**kwargs)
+        except RuntimeError:
+            return sender.FluentSender(**kwargs)
 
     def getSenderClass(self):
         return asyncsender.FluentSender

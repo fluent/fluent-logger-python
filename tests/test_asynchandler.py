@@ -259,6 +259,14 @@ class TestHandler(unittest.TestCase):
         self.assertTrue('tests/test_asynchandler.py", line' in message)
         self.assertTrue("Exception: sample exception" in message)
 
+    @mock.patch('threading.Thread')
+    def test_close_during_interpreter_shutdown(self, thread_mock):
+        thread_mock.return_value.start.side_effect = RuntimeError("can't create new thread at interpreter shutdown")
+
+        handler = self.get_handler_class()("app.follow", port=self._port)
+        handler.close()
+        thread_mock.return_value.start.assert_called_once()
+
 
 class TestHandlerWithCircularQueue(unittest.TestCase):
     Q_SIZE = 3
