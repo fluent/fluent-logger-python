@@ -264,7 +264,9 @@ class FluentHandler(logging.Handler):
         self.acquire()
         try:
             try:
-                self.sender.close()
+                if self._sender is not None:
+                    self._sender.close()
+                    self._sender = None
             finally:
                 super().close()
         finally:
