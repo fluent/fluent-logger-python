@@ -143,7 +143,7 @@ class FluentRecordFormatter(logging.Formatter):
         data = {}
         for key, value in record.__dict__.items():
             if key not in self._exc_attrs:
-                data[key] = value
+                data[key] = str(value)
         return data
 
     def _format_by_dict(self, record):
